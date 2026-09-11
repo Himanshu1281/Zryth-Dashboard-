@@ -28,10 +28,6 @@ export function Header({ title }: HeaderProps) {
 
         <div className="hidden md:flex items-center gap-4">
           <button className="text-on-surface-variant hover:text-primary transition-all text-sm cursor-pointer">Support</button>
-          <button className="bg-primary-container/10 border border-primary-container text-primary rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wider hover:bg-primary-container/20 transition-all cursor-pointer flex items-center gap-2">
-            <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>upload_file</span>
-            Upload PDF
-          </button>
         </div>
 
         <div className="flex items-center gap-3 border-l border-white/10 pl-6">

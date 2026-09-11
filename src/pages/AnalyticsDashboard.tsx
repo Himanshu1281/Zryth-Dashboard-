@@ -93,7 +93,7 @@ export function AnalyticsDashboard() {
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-[600px] xl:h-auto min-h-[600px]">
           
           {/* Recent Calls Table */}
-          <div className="xl:col-span-8 glass-panel rounded-xl flex flex-col overflow-hidden shadow-xl">
+          <div className="xl:col-span-12 glass-panel rounded-xl flex flex-col overflow-hidden shadow-xl">
             <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
               <h4 className="font-headline-md text-xl font-semibold text-on-surface">Recent Calls</h4>
               <button className="text-primary hover:text-primary-container transition-colors font-label-md text-xs uppercase tracking-wider flex items-center gap-1">
@@ -176,73 +176,6 @@ export function AnalyticsDashboard() {
             </div>
           </div>
 
-          {/* Call Analysis Panel */}
-          <div className="xl:col-span-4 glass-panel rounded-xl flex flex-col shadow-2xl relative overflow-hidden">
-            <div className="p-6 border-b border-white/10 bg-white/[0.02] flex justify-between items-center z-10 relative">
-              <div>
-                <h4 className="font-headline-md text-xl font-semibold text-on-surface">Call Analysis</h4>
-                <p className="font-label-md text-xs text-on-surface-variant mt-1 font-mono-label">+1 (555) 019-2834</p>
-              </div>
-              <button className="p-2 rounded-lg hover:bg-white/10 text-on-surface-variant transition-colors">
-                <span className="material-symbols-outlined">more_vert</span>
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6 z-10 relative">
-              {/* AI Summary */}
-              <div className="bg-primary-container/5 border border-primary/10 rounded-lg p-4 relative overflow-hidden">
-                <div className="absolute -right-4 -top-4 text-primary/10 pointer-events-none">
-                  <span className="material-symbols-outlined" style={{ fontSize: '80px' }}>auto_awesome</span>
-                </div>
-                <h5 className="font-label-md text-xs text-primary uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>psychology</span>
-                  AI Summary
-                </h5>
-                <p className="font-body-sm text-sm text-on-surface leading-relaxed">
-                  Caller enquired about a 3 BHK property in downtown. Expressed interest in a viewing this Saturday. Marked as urgent due to high intent to lease.
-                </p>
-              </div>
-
-              {/* System Latency */}
-              <div>
-                <h5 className="font-label-md text-xs text-on-surface-variant uppercase tracking-wider mb-3">System Latency</h5>
-                <div className="flex flex-wrap gap-2">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-white/5">
-                    <span className="text-[10px] uppercase text-on-surface-variant font-bold">EOU</span>
-                    <span className="font-mono-label text-[11px] text-tertiary">120ms</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-container-high border border-white/5">
-                    <span className="text-[10px] uppercase text-on-surface-variant font-bold">STT</span>
-                    <span className="font-mono-label text-[11px] text-tertiary">450ms</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-error/10 border border-error/20">
-                    <span className="text-[10px] uppercase text-on-surface-variant font-bold">LLM</span>
-                    <span className="font-mono-label text-[11px] text-error">1.2s</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Transcript */}
-              <div className="flex flex-col gap-4">
-                <h5 className="font-label-md text-xs text-on-surface-variant uppercase tracking-wider">Transcript Excerpt</h5>
-                
-                <div className="flex flex-col gap-1 items-end">
-                  <span className="font-mono-label text-[10px] text-on-surface-variant mr-1">Caller • 00:12</span>
-                  <div className="bg-surface-container-high border border-white/10 text-on-surface px-4 py-2 rounded-2xl rounded-tr-sm max-w-[85%] font-body-sm text-[13px] leading-relaxed">
-                    Hi, I was looking at the 3 bedroom apartment downtown. Is that still available to view this weekend?
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1 items-start">
-                  <span className="font-mono-label text-[10px] text-primary ml-1">Maya • 00:18</span>
-                  <div className="bg-secondary-container/10 border border-secondary-container/30 text-on-surface px-4 py-2 rounded-2xl rounded-tl-sm max-w-[85%] font-body-sm text-[13px] leading-relaxed relative overflow-hidden backdrop-blur-sm">
-                    Hello! Yes, the 3-bedroom unit at 124 Main St is currently available. I can help you schedule a viewing for this Saturday.
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
         </div>
 
       </div>
