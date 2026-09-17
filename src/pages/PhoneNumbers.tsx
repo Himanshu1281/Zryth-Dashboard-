@@ -5,25 +5,20 @@ export function PhoneNumbers() {
   const [showModal, setShowModal] = useState(false);
 
   return (
-    <Layout title="Phone Numbers">
-      <div className="flex flex-col w-full pb-16 max-w-[1440px] mx-auto space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
-          <div className="flex items-start gap-3.5">
-            <div className="mt-0.5 p-2 rounded-lg bg-primary-container/20 border border-primary-container/30 text-primary">
-              <span className="material-symbols-outlined text-[20px]">phone</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-on-surface tracking-tight flex items-center gap-2">
-                Phone Numbers
-              </h1>
-              <p className="text-xs text-on-surface-variant mt-0.5">3 numbers on your account</p>
-            </div>
+    <Layout disablePadding={true} title="Phone Numbers">
+      <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
+        <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Phone Numbers</h1>
+            <p className="text-sm text-neutral-400 mt-0.5">3 numbers on your account</p>
           </div>
-          <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-container text-white text-xs font-semibold transition shadow-lg active:scale-95">
-            <span className="material-symbols-outlined text-[16px]">add</span>
-            <span>Buy Number</span>
-          </button>
-        </div>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-container text-white text-xs font-semibold transition shadow-lg active:scale-95">
+              <span className="material-symbols-outlined text-[16px]">add</span>
+              <span>Buy Number</span>
+            </button>
+          </div>
+        </section>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="p-4 rounded-xl bg-surface-container-low border border-surface-container-high shadow-md flex items-center justify-between">

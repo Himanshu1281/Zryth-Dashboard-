@@ -5,12 +5,12 @@ export function VoiceAgents() {
   const [isShowingSample] = useState(false);
 
   return (
-    <Layout title="Voice Agents">
-      <div className="flex flex-col w-full pb-16 max-w-[1440px] mx-auto">
-        <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 gap-4 border-b border-surface-container-highest">
+    <Layout disablePadding={true} title="Voice Agents">
+      <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
+        <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-on-surface">Voice Agents</h1>
-            <p className="text-sm text-on-surface-variant mt-1">View the voice agents assigned to your company.</p>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Voice Agents</h1>
+            <p className="text-sm text-neutral-400 mt-0.5">View the voice agents assigned to your company.</p>
           </div>
           <div className="flex items-center gap-3">
             <button className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-primary hover:bg-primary-container text-white transition-all shadow-sm" type="button">
@@ -18,7 +18,7 @@ export function VoiceAgents() {
               <span>Request New Agent</span>
             </button>
           </div>
-        </div>
+        </section>
 
         {!isShowingSample ? (
           <section className="flex-1 flex flex-col items-center justify-center py-20 px-4 text-center select-none" id="empty-state-section">

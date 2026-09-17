@@ -2,13 +2,13 @@ import { Layout } from '../components/Layout';
 
 export function Analytics() {
   return (
-    <Layout title="Analytics - Maya AI Voice">
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
+    <Layout disablePadding={true} title="Analytics - Maya AI Voice">
+      <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
         {/* Header Title Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
           <div>
-            <h2 className="text-2xl lg:text-[28px] font-bold text-on-surface tracking-tight">Analytics</h2>
-            <p className="text-sm text-on-surface-variant mt-0.5">Insights across all your campaigns and agents.</p>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Analytics</h1>
+            <p className="text-sm text-neutral-400 mt-0.5">Insights across all your campaigns and agents.</p>
           </div>
           <div className="flex items-center gap-2">
             <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high border border-white/10 text-xs font-medium text-on-surface-variant hover:text-on-surface cursor-pointer">
@@ -20,11 +20,10 @@ export function Analytics() {
               <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
             </button>
           </div>
-        </div>
+        </section>
 
         {/* Top Large Card: Calls Per Day */}
-        <div className="glass-panel rounded-2xl p-6 shadow-xl relative overflow-hidden">
-          <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full w-full h-full pointer-events-none opacity-30"></div>
+        <div className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl p-6">
           <div className="relative z-10 flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-on-surface tracking-tight">Calls Per Day</h3>
             <div className="flex items-center gap-4 text-xs">
@@ -105,7 +104,7 @@ export function Analytics() {
         {/* Bottom Row: 2 Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Bottom Left Card: Call Status Breakdown */}
-          <div className="glass-panel rounded-2xl p-6 shadow-xl relative flex flex-col justify-between">
+          <div className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-5 z-10">
               <h3 className="text-base font-semibold text-on-surface tracking-tight">Call Status Breakdown</h3>
               <span className="text-xs text-on-surface-variant font-mono-label">Total: 1,245 Calls</span>
@@ -181,7 +180,7 @@ export function Analytics() {
           </div>
 
           {/* Bottom Right Card: Call Duration Distribution */}
-          <div className="glass-panel rounded-2xl p-6 shadow-xl relative flex flex-col justify-between">
+          <div className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between mb-4 z-10">
               <h3 className="text-base font-semibold text-on-surface tracking-tight">Call Duration Distribution</h3>
               <span className="text-xs text-on-surface-variant font-mono-label">Avg: 2m 14s</span>

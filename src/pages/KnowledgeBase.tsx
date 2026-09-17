@@ -2,13 +2,20 @@ import { Layout } from '../components/Layout';
 
 export function KnowledgeBase() {
   return (
-    <Layout title="Knowledge Base">
+    <Layout disablePadding={true} title="Knowledge Base">
       <div 
-        className="max-w-[1440px] mx-auto space-y-8 min-h-full"
+        className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full min-h-full"
         style={{ background: 'radial-gradient(circle at center, rgba(37,99,235,0.05) 0%, transparent 70%)' }}
       >
+        <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Knowledge Base</h1>
+            <p className="text-sm text-neutral-400 mt-0.5">Upload and manage documents for your AI to learn from.</p>
+          </div>
+        </section>
+
         {/* Upload Section */}
-        <section className="bg-[#1c1b1c] bg-gradient-to-b from-white/5 to-transparent border-t border-white/10 border-x border-white/5 shadow-[0_4px_24px_-1px_rgba(0,0,0,0.5)] backdrop-blur-3xl rounded-xl p-8 text-center border-dashed hover:border-primary-container transition-colors duration-300 cursor-pointer group">
+        <section className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl p-8 text-center border-dashed hover:border-neutral-700 transition-colors duration-300 cursor-pointer group">
           <div className="flex flex-col items-center justify-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-surface-container flex items-center justify-center group-hover:bg-primary-container/20 transition-colors">
               <span className="material-symbols-outlined text-4xl text-on-surface-variant group-hover:text-primary transition-colors">cloud_upload</span>
@@ -26,7 +33,7 @@ export function KnowledgeBase() {
         {/* Document Table */}
         <section className="space-y-4">
           <h3 className="font-headline-md text-2xl font-bold text-on-surface">Uploaded Documents</h3>
-          <div className="bg-[#1c1b1c] bg-gradient-to-b from-white/5 to-transparent border-t border-white/10 border-x border-white/5 shadow-[0_4px_24px_-1px_rgba(0,0,0,0.5)] backdrop-blur-3xl rounded-xl overflow-hidden">
+          <div className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl overflow-hidden">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-white/5 bg-surface-container-lowest/50">

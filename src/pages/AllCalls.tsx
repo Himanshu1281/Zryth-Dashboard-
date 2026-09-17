@@ -34,15 +34,14 @@ export function AllCalls() {
   };
 
   return (
-    <Layout title="Call History - Zryth AI Voice" disablePadding>
-      <div className="relative w-full px-8 min-h-screen bg-background pb-16 pt-6">
-        <div className="flex flex-col w-full max-w-[1440px] mx-auto">
+    <Layout disablePadding={true} title="Call History">
+      <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
           {/* Page Header (Title, Subtitle & Action Bar) */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 pb-5">
-            <div>
-              <h1 className="font-headline-lg text-2xl md:text-[28px] font-bold tracking-tight text-on-surface leading-tight">Call History</h1>
-              <p className="font-body-sm text-body-sm text-outline mt-0.5">All outbound call attempts and results</p>
-            </div>
+          <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
+          <div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Call History</h1>
+            <p className="text-sm text-neutral-400 mt-0.5">All outbound call attempts and results</p>
+          </div>
             <div className="flex items-center gap-2.5 self-start sm:self-auto">
               <button className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Alerts">
                 <span className="material-symbols-outlined text-[19px]">notifications</span>
@@ -55,7 +54,7 @@ export function AllCalls() {
                 <span className="">Download Records</span>
               </button>
             </div>
-          </div>
+          </section>
 
           {/* Retention Alert Warning Box */}
           <div className="mb-6 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-amber-200 text-xs sm:text-sm flex items-start sm:items-center gap-3 shadow-sm">
@@ -413,7 +412,6 @@ export function AllCalls() {
           </div>
         </Drawer>
 
-      </div>
     </Layout>
   );
 }

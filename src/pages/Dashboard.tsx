@@ -3,7 +3,7 @@ import { Layout } from '../components/Layout';
 export function Dashboard() {
   return (
     <Layout disablePadding={true} title="Dashboard - Zryth AI Voice">
-      <div className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
+      <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
         {/* BEGIN: Page Header */}
         <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
           <div>

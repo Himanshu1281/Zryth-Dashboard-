@@ -2,20 +2,13 @@ import { Layout } from '../components/Layout';
 
 export function Settings() {
   return (
-    <Layout title="Settings">
-      <div className="flex flex-col w-full pb-16 max-w-[1440px] mx-auto">
+    <Layout disablePadding={true} title="Settings">
+      <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
         {/* Top Action / Breadcrumb Bar Synchronizer */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8 py-8">
+        <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="font-mono-label text-outline text-[11px] tracking-wider uppercase">Enterprise Workspace</span>
-              <span className="text-outline text-xs">/</span>
-              <span className="font-mono-label text-primary text-[11px] tracking-wider uppercase">System Preferences</span>
-            </div>
-            <div className="flex items-baseline gap-2">
-              <h1 className="font-headline-lg text-4xl font-bold text-on-surface tracking-tight">Settings</h1>
-              <span className="font-mono-label px-2 py-0.5 rounded-full bg-surface-container-high text-tertiary text-[11px]">Production</span>
-            </div>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Settings</h1>
+            <p className="text-sm text-neutral-400 mt-0.5">Manage your workspace preferences and configurations.</p>
           </div>
           {/* Quick Action Controls */}
           <div className="flex items-center gap-4 self-start lg:self-center">
@@ -28,15 +21,14 @@ export function Settings() {
               <span>Save Changes</span>
             </button>
           </div>
-        </div>
+        </section>
 
         {/* Primary Layout Bento Grid */}
         <div className="grid grid-cols-1 gap-8">
           <div className="flex flex-col gap-8">
             
             {/* Card: Profile & Identity */}
-            <div className="relative rounded-xl bg-surface-container-low p-6 shadow-md overflow-hidden">
-              <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-primary/5 blur-3xl pointer-events-none"></div>
+            <div className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl p-6">
               <div className="flex items-start justify-between pb-4 mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
@@ -138,8 +130,7 @@ export function Settings() {
             </div>
 
             {/* Card: Appearance & Interface Themes */}
-            <div className="relative rounded-xl bg-surface-container-low p-6 shadow-md overflow-hidden">
-              <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-tertiary/5 blur-3xl pointer-events-none"></div>
+            <div className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 mb-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-tertiary/10 flex items-center justify-center text-tertiary">
