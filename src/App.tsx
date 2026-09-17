@@ -8,7 +8,7 @@ import { Analytics } from './pages/Analytics';
 import { KnowledgeBase } from './pages/KnowledgeBase';
 import { AllCalls } from './pages/AllCalls';
 import { CallTranscript } from './pages/CallTranscript';
-import BehaviorGreetings from './pages/BehaviorGreetings';
+
 import { Settings } from './pages/Settings';
 import { VoiceAgents } from './pages/VoiceAgents';
 import { PhoneNumbers } from './pages/PhoneNumbers';
@@ -28,7 +28,7 @@ function App() {
             <Route path="/calls" element={<AllCalls />} />
             <Route path="/calls/:id" element={<CallTranscript />} />
             <Route path="/knowledge" element={<KnowledgeBase />} />
-            <Route path="/behavior" element={<BehaviorGreetings />} />
+
             <Route path="/settings" element={<Settings />} />
             <Route path="/agents" element={<VoiceAgents />} />
             <Route path="/phone-numbers" element={<PhoneNumbers />} />
