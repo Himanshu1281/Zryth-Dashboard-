@@ -4,7 +4,7 @@ export function Sidebar() {
   const location = useLocation();
 
   const isPathActive = (path: string) => {
-    return location.pathname === path || (location.pathname === '/' && path === '/analytics');
+    return location.pathname === path;
   };
 
   return (
@@ -26,12 +26,23 @@ export function Sidebar() {
       </div>
 
       {/* Main Nav Tabs */}
-      <div className="flex-1 overflow-y-auto py-6 px-3 flex flex-col gap-6">
+      <div className="flex-1 py-6 px-3 flex flex-col gap-6 no-scrollbar">
         
         {/* PLATFORM */}
         <div className="flex flex-col gap-1">
           <div className="font-label-md text-[10px] font-semibold tracking-wider text-outline uppercase px-3 mb-1.5 opacity-60">Platform</div>
           <div className="flex flex-col gap-1">
+            <Link
+              to="/"
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-body-sm text-sm transition-colors duration-200 ${
+                isPathActive('/')
+                  ? 'bg-primary-container text-on-primary-container font-medium shadow-[0_0_15px_rgba(37,99,235,0.3)]'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'
+              }`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>space_dashboard</span>
+              <span>Dashboard</span>
+            </Link>
             <Link
               to="/analytics"
               className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-body-sm text-sm transition-colors duration-200 ${
@@ -53,6 +64,28 @@ export function Sidebar() {
             >
               <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>call</span>
               <span>All Calls</span>
+            </Link>
+            <Link
+              to="/phone-numbers"
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-body-sm text-sm transition-colors duration-200 ${
+                isPathActive('/phone-numbers')
+                  ? 'bg-primary-container text-on-primary-container font-medium shadow-[0_0_15px_rgba(37,99,235,0.3)]'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'
+              }`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>phone_in_talk</span>
+              <span>Phone Numbers</span>
+            </Link>
+            <Link
+              to="/agents"
+              className={`flex items-center gap-3 px-3.5 py-2.5 rounded-lg font-body-sm text-sm transition-colors duration-200 ${
+                isPathActive('/agents')
+                  ? 'bg-primary-container text-on-primary-container font-medium shadow-[0_0_15px_rgba(37,99,235,0.3)]'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-white/5'
+              }`}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>record_voice_over</span>
+              <span>Voice Agents</span>
             </Link>
           </div>
         </div>

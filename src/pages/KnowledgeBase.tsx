@@ -52,10 +52,10 @@ export function KnowledgeBase() {
                   </td>
                   <td className="py-4 px-6 font-mono-label text-[13px] text-on-surface-variant">2.4 MB</td>
                   <td className="py-4 px-6 text-right space-x-2">
-                    <button className="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+                    <button className="text-outline hover:text-primary transition-colors opacity-50 group-hover:opacity-100">
                       <span className="material-symbols-outlined text-sm">visibility</span>
                     </button>
-                    <button className="text-outline hover:text-error transition-colors opacity-0 group-hover:opacity-100">
+                    <button className="text-outline hover:text-error transition-colors opacity-50 group-hover:opacity-100">
                       <span className="material-symbols-outlined text-sm">delete</span>
                     </button>
                   </td>
@@ -75,10 +75,10 @@ export function KnowledgeBase() {
                   </td>
                   <td className="py-4 px-6 font-mono-label text-[13px] text-on-surface-variant">15.1 MB</td>
                   <td className="py-4 px-6 text-right space-x-2">
-                    <button className="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+                    <button className="text-outline hover:text-primary transition-colors opacity-50 group-hover:opacity-100">
                       <span className="material-symbols-outlined text-sm">visibility</span>
                     </button>
-                    <button className="text-outline hover:text-error transition-colors opacity-0 group-hover:opacity-100">
+                    <button className="text-outline hover:text-error transition-colors opacity-50 group-hover:opacity-100">
                       <span className="material-symbols-outlined text-sm">delete</span>
                     </button>
                   </td>
@@ -98,10 +98,10 @@ export function KnowledgeBase() {
                   </td>
                   <td className="py-4 px-6 font-mono-label text-[13px] text-on-surface-variant">8.7 MB</td>
                   <td className="py-4 px-6 text-right space-x-2">
-                    <button className="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+                    <button className="text-outline hover:text-primary transition-colors opacity-50 group-hover:opacity-100">
                       <span className="material-symbols-outlined text-sm">visibility</span>
                     </button>
-                    <button className="text-outline hover:text-error transition-colors opacity-0 group-hover:opacity-100">
+                    <button className="text-outline hover:text-error transition-colors opacity-50 group-hover:opacity-100">
                       <span className="material-symbols-outlined text-sm">delete</span>
                     </button>
                   </td>

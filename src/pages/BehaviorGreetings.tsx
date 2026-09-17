@@ -1,5 +1,3 @@
-import React, { useState } from 'react';
-
 const BehaviorGreetings = () => {
   return (
     <>
@@ -150,16 +148,16 @@ const BehaviorGreetings = () => {
 <div className="flex items-center justify-between">
 <label className="text-[11px] font-mono text-neutral-400 uppercase tracking-wide">First Spoken Utterance</label>
 <div className="flex gap-1">
-<button className="text-[10px] text-blue-400 hover:bg-blue-500/20 px-1 rounded transition-colors font-mono" onClick="insertVariableQuick('{customer_name}')" type="button">{customer}</button>
-<button className="text-[10px] text-blue-400 hover:bg-blue-500/20 px-1 rounded transition-colors font-mono" onClick="insertVariableQuick('{agent_name}')" type="button">{agent}</button>
+<button className="text-[10px] text-blue-400 hover:bg-blue-500/20 px-1 rounded transition-colors font-mono" onClick={() => {}} type="button">{"{customer_name}"}</button>
+<button className="text-[10px] text-blue-400 hover:bg-blue-500/20 px-1 rounded transition-colors font-mono" onClick={() => {}} type="button">{"{agent_name}"}</button>
 </div>
 </div>
-<textarea className="w-full bg-[#1e1e24] border border-white/10 focus:border-blue-500 text-xs rounded-lg px-3 py-2 text-white placeholder-neutral-500 focus:outline-none resize-none leading-relaxed transition-colors" id="newUtteranceInput" placeholder="Exact first sentence the agent verbalizes immediately..." rows="2"></textarea>
+<textarea className="w-full bg-[#1e1e24] border border-white/10 focus:border-blue-500 text-xs rounded-lg px-3 py-2 text-white placeholder-neutral-500 focus:outline-none resize-none leading-relaxed transition-colors" id="newUtteranceInput" placeholder="Exact first sentence the agent verbalizes immediately..." rows={2}></textarea>
 </div>
 {/* Col 3: Agent Behavior (4 cols) */}
 <div className="md:col-span-4 flex flex-col gap-1.5">
 <label className="text-[11px] font-mono text-neutral-400 uppercase tracking-wide">Agent Behavior / What the Agent Will Do</label>
-<textarea className="w-full bg-[#1e1e24] border border-white/10 focus:border-blue-500 text-xs rounded-lg px-3 py-2 text-white placeholder-neutral-500 focus:outline-none resize-none leading-relaxed transition-colors" id="newBehaviorInput" placeholder="Directives, constraints, knowledge retrieval, and boundary rules..." rows="2"></textarea>
+<textarea className="w-full bg-[#1e1e24] border border-white/10 focus:border-blue-500 text-xs rounded-lg px-3 py-2 text-white placeholder-neutral-500 focus:outline-none resize-none leading-relaxed transition-colors" id="newBehaviorInput" placeholder="Directives, constraints, knowledge retrieval, and boundary rules..." rows={2}></textarea>
 </div>
 {/* Col 4: Submit Button (1 col) */}
 <div className="md:col-span-1 flex flex-col justify-end pt-5">
@@ -203,13 +201,13 @@ const BehaviorGreetings = () => {
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
 <div className="relative">
-<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows="2">Hello! Thank you for calling Zryth Realty. My name is Maya, your AI assistant. How can I assist you with your property inquiry or appointment today?</textarea>
+<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>Hello! Thank you for calling Zryth Realty. My name is Maya, your AI assistant. How can I assist you with your property inquiry or appointment today?</textarea>
 </div>
 <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500">
 <div className="flex items-center gap-1">
 <span className="text-[10px] text-neutral-400">Variables:</span>
-<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{customer_name}">{customer_name}</button>
-<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{agent_alias}">{agent_alias}</button>
+<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{customer_name}">{"{customer_name}"}</button>
+<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{agent_alias}">{"{agent_alias}"}</button>
 </div>
 <span className="char-count text-neutral-400">138 chars • ~7.2s</span>
 </div>
@@ -217,7 +215,7 @@ const BehaviorGreetings = () => {
 </td>
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
-<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows="2">Greet caller warmly. Inquire whether caller is looking for residential sales, commercial leasing, or urgent maintenance. Limit speech to &lt;2 sentences per conversational turn.</textarea>
+<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>Greet caller warmly. Inquire whether caller is looking for residential sales, commercial leasing, or urgent maintenance. Limit speech to &lt;2 sentences per conversational turn.</textarea>
 <div className="flex items-center gap-2">
 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Tone: Friendly &amp; Concise</span>
 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">Max Latency: 320ms</span>
@@ -261,12 +259,12 @@ const BehaviorGreetings = () => {
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
 <div className="relative">
-<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows="2">I can certainly pull up our current MLS listings for you. Are you looking in Downtown, Westside, or the Financial District?</textarea>
+<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>I can certainly pull up our current MLS listings for you. Are you looking in Downtown, Westside, or the Financial District?</textarea>
 </div>
 <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500">
 <div className="flex items-center gap-1">
 <span className="text-[10px] text-neutral-400">Variables:</span>
-<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{preferred_city}">{preferred_city}</button>
+<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{preferred_city}">{"{preferred_city}"}</button>
 </div>
 <span className="char-count text-neutral-400">127 chars • ~6.5s</span>
 </div>
@@ -274,7 +272,7 @@ const BehaviorGreetings = () => {
 </td>
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
-<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows="2">Query Knowledge Base embeddings for verified available units. Extract bedroom count, budget ceiling, and move-in timeline. Never state firm mortgage estimates without a licensed broker disclaimer.</textarea>
+<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>Query Knowledge Base embeddings for verified available units. Extract bedroom count, budget ceiling, and move-in timeline. Never state firm mortgage estimates without a licensed broker disclaimer.</textarea>
 <div className="flex items-center gap-2">
 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">Knowledge Base Attached</span>
 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">Guardrail: Strict</span>
@@ -318,13 +316,13 @@ const BehaviorGreetings = () => {
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
 <div className="relative">
-<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows="2">Our 1-bedroom units in {property_name} begin at $2,450 per month, inclusive of parking and fitness club access.</textarea>
+<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>Our 1-bedroom units in {"{property_name}"} begin at $2,450 per month, inclusive of parking and fitness club access.</textarea>
 </div>
 <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500">
 <div className="flex items-center gap-1">
 <span className="text-[10px] text-neutral-400">Variables:</span>
-<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{property_name}">{property_name}</button>
-<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{price_starting}">{price_starting}</button>
+<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{property_name}">{"{property_name}"}</button>
+<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{price_starting}">{"{price_starting}"}</button>
 </div>
 <span className="char-count text-neutral-400">114 chars • ~5.8s</span>
 </div>
@@ -332,7 +330,7 @@ const BehaviorGreetings = () => {
 </td>
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
-<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows="2">Quote price range solely from verified catalog. Ask if they want a breakdown sent via SMS or email. If caller requests discounts, redirect to leasing director schedule.</textarea>
+<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>Quote price range solely from verified catalog. Ask if they want a breakdown sent via SMS or email. If caller requests discounts, redirect to leasing director schedule.</textarea>
 <div className="flex items-center gap-2">
 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-neutral-800 text-neutral-400">Action: SMS Dispatch Trigger</span>
 </div>
@@ -375,12 +373,12 @@ const BehaviorGreetings = () => {
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
 <div className="relative">
-<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows="2">You have reached Zryth Realty after hours. I'm Maya, available 24/7 to record maintenance emergencies or book tomorrow's tours. What is your property address?</textarea>
+<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>You have reached Zryth Realty after hours. I'm Maya, available 24/7 to record maintenance emergencies or book tomorrow's tours. What is your property address?</textarea>
 </div>
 <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500">
 <div className="flex items-center gap-1">
 <span className="text-[10px] text-neutral-400">Variables:</span>
-<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{current_time_of_day}">{current_time}</button>
+<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{current_time_of_day}">{"{current_time_of_day}"}</button>
 </div>
 <span className="char-count text-neutral-400">165 chars • ~8.4s</span>
 </div>
@@ -388,7 +386,7 @@ const BehaviorGreetings = () => {
 </td>
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
-<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows="2">Determine if call is urgent maintenance (flooding, HVAC failure, security lock) or standard inquiry. If urgent, dispatch SMS payload to on-call supervisor immediately.</textarea>
+<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>Determine if call is urgent maintenance (flooding, HVAC failure, security lock) or standard inquiry. If urgent, dispatch SMS payload to on-call supervisor immediately.</textarea>
 <div className="flex items-center gap-2">
 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">Urgent Dispatch Webhook</span>
 </div>
@@ -431,12 +429,12 @@ const BehaviorGreetings = () => {
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
 <div className="relative">
-<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows="2">I understand completely. Let me transfer you directly to our senior leasing supervisor right now. Please hold for just a few seconds.</textarea>
+<textarea className="rule-utterance-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-200 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>I understand completely. Let me transfer you directly to our senior leasing supervisor right now. Please hold for just a few seconds.</textarea>
 </div>
 <div className="flex items-center justify-between text-[11px] font-mono text-neutral-500">
 <div className="flex items-center gap-1">
 <span className="text-[10px] text-neutral-400">Variables:</span>
-<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{supervisor_extension}">{extension}</button>
+<button className="var-btn px-1.5 py-0.5 rounded bg-white/[0.05] hover:bg-blue-500/20 text-blue-400 text-[10px] transition-colors" data-var="{supervisor_extension}">{"{supervisor_extension}"}</button>
 </div>
 <span className="char-count text-neutral-400">135 chars • ~7.0s</span>
 </div>
@@ -444,7 +442,7 @@ const BehaviorGreetings = () => {
 </td>
 <td className="py-4 px-4 align-top">
 <div className="flex flex-col gap-2">
-<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows="2">Trigger warm SIP referral to queue +1-800-555-0199. Send full conversation summary, customer phone number, and identified intent to operator console.</textarea>
+<textarea className="rule-behavior-input w-full bg-[#1a1a20] hover:bg-[#1f1f26] focus:bg-[#1f1f26] border border-white/10 focus:border-blue-500 rounded-lg p-2.5 text-xs text-neutral-300 focus:outline-none leading-relaxed transition-all resize-y" rows={2}>Trigger warm SIP referral to queue +1-800-555-0199. Send full conversation summary, customer phone number, and identified intent to operator console.</textarea>
 <div className="flex items-center gap-2">
 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20">SIP Trunk Hand-off</span>
 </div>

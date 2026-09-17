@@ -1,15 +1,15 @@
 import { Layout } from '../components/Layout';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 export function CallTranscript() {
   const navigate = useNavigate();
 
   return (
-    <Layout title="Maya AI Voice Agent - Call Transcript">
-      <div className="flex flex-col w-full max-w-[1440px] mx-auto pb-16">
+    <Layout title="Maya AI Voice Agent - Call Transcript" disablePadding={true}>
+      <div className="w-full max-w-[1440px] mx-auto pb-16 px-6 lg:px-10">
         
         {/* Sticky Sub-Navigation Header */}
-        <div className="sticky top-0 z-30 flex flex-col gap-3 py-3 bg-surface/90 backdrop-blur-xl border-b border-surface-container-high mb-6">
+        <div className="sticky top-0 z-30 flex flex-col gap-3 pt-6 lg:pt-10 pb-3 -mx-6 lg:-mx-10 px-6 lg:px-10 bg-surface border-b border-surface-container-high mb-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3">
               <button 

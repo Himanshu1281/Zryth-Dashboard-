@@ -5,43 +5,28 @@ interface HeaderProps {
 }
 
 export function Header({ title }: HeaderProps) {
+  // Extract the page name from the title, e.g., "Analytics - Zryth AI Voice" -> "Analytics"
+  const pageName = title.split(' - ')[0];
+  
   return (
-    <header className="flex justify-between items-center px-6 lg:px-10 py-4 sticky top-0 z-50 w-full bg-surface/80 backdrop-blur-xl border-b border-white/5 shrink-0">
-      {/* Brand / Product Name */}
-      <div className="flex items-center gap-4">
-        <button className="md:hidden text-on-surface-variant p-2 -ml-2 rounded-lg hover:bg-white/5">
-          <span className="material-symbols-outlined">menu</span>
-        </button>
-        <h2 className="font-headline-md text-xl font-bold text-on-surface">{title}</h2>
+    <header className="h-16 flex-shrink-0 bg-[#0e0e0f] border-b border-[rgba(255,255,255,0.08)] px-8 flex items-center justify-between z-10 w-full">
+      {/* Breadcrumb / Title */}
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-neutral-400 font-medium tracking-wide uppercase">Enterprise Workspace</span>
+        <span className="text-neutral-600">/</span>
+        <span className="text-neutral-200 font-semibold">{pageName}</span>
       </div>
 
       {/* Trailing Actions */}
-      <div className="flex items-center gap-6">
-        <div className="hidden lg:flex items-center bg-surface-container-high rounded-full px-4 py-2 border border-white/10 w-64 hover:border-white/20 transition-colors cursor-text">
-          <span className="material-symbols-outlined text-on-surface-variant mr-2" style={{ fontSize: '18px' }}>search</span>
-          <input 
-            className="bg-transparent border-none text-sm text-on-surface placeholder:text-outline focus:outline-none w-full p-0" 
-            placeholder="Search calls, numbers..." 
-            type="text" 
-          />
-        </div>
-
-        <div className="hidden md:flex items-center gap-4">
-          <button className="text-on-surface-variant hover:text-primary transition-all text-sm cursor-pointer">Support</button>
-        </div>
-
-        <div className="flex items-center gap-3 border-l border-white/10 pl-6">
-          <button className="text-on-surface-variant hover:text-primary transition-all p-2 rounded-full hover:bg-white/5 cursor-pointer relative">
-            <span className="material-symbols-outlined">notifications</span>
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full"></span>
-          </button>
-          <button className="text-on-surface-variant hover:text-primary transition-all p-2 rounded-full hover:bg-white/5 cursor-pointer overflow-hidden w-9 h-9 border border-white/10">
-            <img 
-              alt="User Profile" 
-              className="w-full h-full object-cover" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7kR0fpYy3DqqrGQta_PwVM1w3FjO7QpCJkYGGkH32DdSs_IVdyioSOEnb84wXUk0WuhIhfWeK6RHV-cohzvjzPt11NlFucBCXdj_XkYhkt9KBsueYX3nJF5onjdmFcoR-TIhljGDb_BE8wusGb1WLJuMAEEWSe4TWjfYgbn02LsHRWYRBKxL6SKMCCi2_GPniwRByoZ5wnCbgZbnNo6NbeQZ-zs_oX7taJvZgOkTyLC5toDMZoz3Q36BAayTSfiHE50WoaQXlzD1v"
-            />
-          </button>
+      <div className="flex items-center gap-4">
+        <button className="relative p-2 text-neutral-400 hover:text-white rounded-lg hover:bg-neutral-800/60 transition-colors" title="Notifications">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
+          </svg>
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
+        </button>
+        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-700 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-white text-xs font-semibold">
+          OP
         </div>
       </div>
     </header>
