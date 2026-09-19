@@ -1,13 +1,72 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
+import { useAuth } from '../context/AuthContext';
+import { supabase } from '../config/supabase';
 
 export function SignUp() {
   const navigate = useNavigate();
+  const { signup, signInWithGoogle } = useAuth();
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [company, setCompany] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/login');
+    setError('');
+    setIsSubmitting(true);
+    
+    try {
+      // 0. Check if email already exists in our database
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email.trim())
+        .maybeSingle();
+        
+      if (existingUser) {
+        throw new Error("User already exist . please sign in instead.");
+      }
+
+      // 1. Create Supabase Auth User
+      const { data: userCredential, error: signupError } = await signup({ email, password });
+      
+      if (signupError) throw signupError;
+      
+      const user = userCredential.user;
+      
+      if (!user) {
+        throw new Error("Failed to retrieve user data after signup.");
+      }
+
+      // 2. Insert Profile into Supabase
+      const { error: supabaseError } = await supabase
+        .from('users')
+        .insert([
+          {
+            id: user.id,
+            full_name: fullName,
+            email: email,
+            company: company
+          }
+        ]);
+
+      if (supabaseError) {
+        console.error("Failed to save profile to Supabase:", supabaseError);
+        // We might want to alert the user, but they are already authenticated in Firebase.
+      }
+
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Failed to create an account.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -17,6 +76,12 @@ export function SignUp() {
         <h2 className="font-headline-lg text-3xl font-bold tracking-tight text-on-surface">Create your account</h2>
         <p className="mt-1 text-sm text-on-surface-variant">Start building and analyzing AI voice agents today.</p>
       </header>
+      
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
+          {error}
+        </div>
+      )}
       
       {/* Registration Form */}
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -32,6 +97,8 @@ export function SignUp() {
             placeholder="Jane Doe" 
             required 
             type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
           />
         </div>
         
@@ -47,6 +114,8 @@ export function SignUp() {
             placeholder="name@company.com" 
             required 
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         
@@ -62,6 +131,8 @@ export function SignUp() {
             placeholder="Acme Corp" 
             required 
             type="text"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
           />
         </div>
         
@@ -73,27 +144,44 @@ export function SignUp() {
             </label>
             <span className="text-xs text-on-surface-variant">At least 8 characters</span>
           </div>
-          <input 
-            className="bg-surface-container-low border border-outline-variant/30 focus:border-primary focus:bg-surface-container-low focus:ring-1 focus:ring-primary transition-all w-full rounded-lg px-4 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none" 
-            id="password" 
-            minLength={8} 
-            name="password" 
-            placeholder="••••••••" 
-            required 
-            type="password"
-          />
+          <div className="relative">
+            <input 
+              className="w-full bg-surface-container-low border border-outline-variant/30 focus:border-primary focus:bg-surface-container-low focus:ring-1 focus:ring-primary transition-all rounded-lg pl-4 pr-11 py-2.5 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none" 
+              id="password" 
+              minLength={8} 
+              name="password" 
+              placeholder="••••••••" 
+              required 
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none flex items-center justify-center p-1"
+              tabIndex={-1}
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {showPassword ? 'visibility_off' : 'visibility'}
+              </span>
+            </button>
+          </div>
         </div>
         
         {/* Primary CTA Submit Button */}
         <div className="pt-1">
           <button 
-            className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-lg bg-primary-container hover:bg-primary-container/90 active:scale-[0.98] text-on-primary-container font-semibold text-sm transition-all shadow-[0_0_24px_rgba(37,99,235,0.15)] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background" 
+            className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-lg bg-primary-container hover:bg-primary-container/90 active:scale-[0.98] text-on-primary-container font-semibold text-sm transition-all shadow-[0_0_24px_rgba(37,99,235,0.15)] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:opacity-70 disabled:cursor-not-allowed" 
             type="submit"
+            disabled={isSubmitting}
           >
-            <span>Create Account</span>
-            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-              <path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeLinecap="round" strokeLinejoin="round"></path>
-            </svg>
+            <span>{isSubmitting ? 'Creating Account...' : 'Create Account'}</span>
+            {!isSubmitting && (
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeLinecap="round" strokeLinejoin="round"></path>
+              </svg>
+            )}
           </button>
         </div>
       </form>
@@ -108,6 +196,7 @@ export function SignUp() {
       {/* Google Social Authentication Button */}
       <div>
         <button 
+          onClick={signInWithGoogle}
           className="w-full bg-transparent border border-outline-variant/30 text-on-surface font-label-md text-sm font-semibold tracking-wide py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-white/5 transition-colors" 
           type="button"
         >

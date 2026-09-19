@@ -1,37 +1,311 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '../components/Layout';
 import { Link } from 'react-router-dom';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Drawer } from '../components/ui/Drawer';
+import { supabase } from '../config/supabase';
+
+interface CallData {
+  id: string;
+  livekit_room: string;
+  phone: string;
+  customer_name: string;
+  language: string;
+  started_at: string;
+  ended_at: string | null;
+  duration_seconds: number | null;
+  requirement: string;
+  agent_id: string;
+  status?: string;
+  estimated_duration?: number | null;
+  messages?: { id: string; created_at: string }[];
+}
+
+interface MessageData {
+  id: string;
+  call_id: string;
+  speaker: 'customer' | 'maya';
+  message: string;
+  created_at: string;
+}
 
 export function AllCalls() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
+  const [selectedCall, setSelectedCall] = useState<CallData | null>(null);
   const [isTableView, setIsTableView] = useState(true);
 
-  // Filter states
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [agentsMenuOpen, setAgentsMenuOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
   const [selectedAgent, setSelectedAgent] = useState('All Agents');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const openDrawer = (callId: string) => {
-    setSelectedCallId(callId);
+  // Data states
+  const [calls, setCalls] = useState<CallData[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Drawer messages state
+  const [messages, setMessages] = useState<MessageData[]>([]);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [drawerViewMode, setDrawerViewMode] = useState<'transcript' | 'summary'>('transcript');
+  const [isSummarizing, setIsSummarizing] = useState(false);
+  const [summary, setSummary] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchCalls();
+  }, []);
+
+  const fetchCalls = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('calls')
+        .select('*, messages(id, created_at)')
+        .order('started_at', { ascending: false });
+
+      if (error) throw error;
+      
+      const callsData = data || [];
+      
+      // Fetch estimated duration for calls that crashed/ongoing
+      callsData.forEach((call: CallData) => {
+        if ((call.duration_seconds === null || call.duration_seconds === undefined) && call.messages && call.messages.length > 0) {
+          // Find the latest message timestamp
+          const lastMsg = call.messages.reduce((latest, msg) => {
+            return new Date(msg.created_at) > new Date(latest.created_at) ? msg : latest;
+          }, call.messages[0]);
+              
+          const start = new Date(call.started_at);
+          const end = new Date(lastMsg.created_at);
+          const diff = Math.floor((end.getTime() - start.getTime()) / 1000);
+          if (diff > 0) {
+            call.estimated_duration = diff;
+          }
+        }
+      });
+
+      setCalls(callsData);
+    } catch (error) {
+      console.error('Error fetching calls:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openDrawer = async (call: CallData) => {
+    setSelectedCall(call);
     setDrawerOpen(true);
+    setLoadingMessages(true);
+    
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('call_id', call.id)
+        .order('created_at', { ascending: true });
+        
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setMessages([]);
+    } finally {
+      setLoadingMessages(false);
+    }
   };
 
   const closeDrawer = () => {
     setDrawerOpen(false);
-    setTimeout(() => setSelectedCallId(null), 300);
+    setTimeout(() => {
+      setSelectedCall(null);
+      setMessages([]);
+      setDrawerViewMode('transcript');
+      setSummary(null);
+    }, 300);
+  };
+
+  const handleSummarize = async () => {
+    setDrawerViewMode('summary');
+    if (summary) return;
+    
+    setIsSummarizing(true);
+    
+    try {
+      if (!messages || messages.length === 0) {
+        setSummary("There are no messages in this transcript to summarize.");
+        setIsSummarizing(false);
+        return;
+      }
+      
+      const transcriptText = messages.map(m => `${m.speaker === 'maya' ? 'Maya (AI Agent)' : selectedCall?.customer_name || 'Customer'}: ${m.message}`).join('\n');
+      const prompt = `You are an expert conversation analyst. Please read the following customer service transcript and write a concise, professional summary paragraph (3-5 sentences).
+
+Make sure to include:
+1. The customer's specific questions or requests.
+2. Any exact product names, features, or details the agent provided (e.g., Finance Auditor Software, mill industry).
+3. The final outcome of the call.
+
+Please write it as a fluid paragraph, without bullet points or markdown.
+
+Transcript:
+${transcriptText}`;
+      
+      const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
+      if (!apiKey) {
+        setSummary("Google API Key not found. Please add VITE_GOOGLE_API_KEY to your .env file.");
+        setIsSummarizing(false);
+        return;
+      }
+      
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+      
+      if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errorBody}`);
+      }
+      
+      const data = await response.json();
+      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      
+      if (generatedText) {
+        setSummary(generatedText);
+      } else {
+        setSummary(`API returned an unexpected response format: ${JSON.stringify(data)}`);
+      }
+    } catch (error: any) {
+      console.error("Summarization error:", error);
+      setSummary(`API Error: ${error.message || 'Unknown error occurred.'}`);
+    } finally {
+      setIsSummarizing(false);
+    }
   };
 
   const clearFilters = () => {
     setSelectedStatus('All Statuses');
     setSelectedAgent('All Agents');
+    setSearchQuery('');
+    setCurrentPage(1);
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
     if (searchInput) searchInput.value = '';
     setIsTableView(true);
   };
+
+  const formatDuration = (seconds: number | null | undefined) => {
+    if (seconds === null || seconds === undefined) return '—';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}m ${s < 10 ? '0' : ''}${s}s`;
+  };
+
+  const formatCost = (seconds: number | null | undefined) => {
+    if (seconds === null || seconds === undefined) return '₹0.00';
+    // ₹3.2 per minute
+    const cost = (seconds / 60) * 3.2;
+    return `₹${cost.toFixed(2)}`;
+  };
+
+  const formatDate = (dateString: string) => {
+    const d = new Date(dateString);
+    return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+  
+  const getDerivedStatus = (call: CallData) => {
+    const msgCount = call.messages?.length || 0;
+    
+    // Strict rule: <= 1 message is always Failed. 
+    if (msgCount <= 1) {
+      return 'Failed';
+    }
+    
+    // If the database status says 'Failed' but there are >= 2 messages, 
+    // we ignore it and calculate based on the logic below.
+    if (call.status && call.status.toLowerCase() !== 'failed') {
+      return call.status;
+    }
+    
+    if (!call.ended_at) {
+      const req = call.requirement?.trim().toLowerCase() || '';
+      if (req && !req.includes('none') && req !== 'null') {
+        return 'Converted';
+      }
+      return 'Interrupted';
+    }
+    
+    return 'Completed';
+  };
+
+  const getStatusColor = (status: string | undefined) => {
+    if (!status) return 'bg-tertiary-container/30 text-tertiary';
+    const s = status.toLowerCase();
+    if (s.includes('fail') || s.includes('missed') || s.includes('drop')) return 'bg-error-container/50 text-error';
+    if (s.includes('progress') || s.includes('transfer')) return 'bg-secondary-container/40 text-secondary';
+    if (s.includes('complete') || s.includes('answer') || s.includes('convert')) return 'bg-tertiary-container/30 text-tertiary';
+    return 'bg-surface-container-high text-on-surface';
+  };
+  
+  const getStatusDotColor = (status: string | undefined) => {
+    if (!status) return 'bg-tertiary';
+    const s = status.toLowerCase();
+    if (s.includes('fail') || s.includes('missed') || s.includes('drop')) return 'bg-error';
+    if (s.includes('progress') || s.includes('transfer')) return 'bg-secondary';
+    if (s.includes('complete') || s.includes('answer') || s.includes('convert')) return 'bg-tertiary';
+    return 'bg-outline';
+  };
+
+  const statuses = ['All Statuses', 'Completed', 'Failed', 'Transferred', 'Converted', 'Interrupted'];
+
+  // Apply filters
+  const filteredCalls = calls.filter(call => {
+    // 1. Status Filter
+    if (selectedStatus !== 'All Statuses') {
+      if (getDerivedStatus(call) !== selectedStatus) {
+        return false;
+      }
+    }
+    
+    // 2. Search Filter
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase().trim();
+      const phoneMatch = call.phone?.toLowerCase().includes(q) || false;
+      const nameMatch = call.customer_name?.toLowerCase().includes(q) || false;
+      if (!phoneMatch && !nameMatch) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredCalls.length / itemsPerPage);
+  const currentCalls = filteredCalls.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Derived metrics from filteredCalls
+  const totalSeconds = filteredCalls.reduce((acc, call) => acc + (call.duration_seconds ?? call.estimated_duration ?? 0), 0);
+  const customerBill = isTableView ? formatCost(totalSeconds) : '₹0.00';
+  const totalDurationStr = isTableView ? formatDuration(totalSeconds) : '—';
+  const avgCostStr = isTableView && filteredCalls.length > 0 ? formatCost(totalSeconds / filteredCalls.length) : '₹0.00';
+  const avgDurationStr = isTableView && filteredCalls.length > 0 ? formatDuration(Math.floor(totalSeconds / filteredCalls.length)) : '—';
+
+  // Calculate estimated duration from transcript if duration_seconds is null
+  let displayDuration = selectedCall?.duration_seconds ?? selectedCall?.estimated_duration;
+  if ((displayDuration === null || displayDuration === undefined) && messages.length > 0 && selectedCall?.started_at) {
+    const lastMessageDate = new Date(messages[messages.length - 1].created_at);
+    const startDate = new Date(selectedCall.started_at);
+    const diffSeconds = Math.floor((lastMessageDate.getTime() - startDate.getTime()) / 1000);
+    displayDuration = diffSeconds > 0 ? diffSeconds : null;
+  }
 
   return (
     <Layout disablePadding={true} title="Call History">
@@ -46,8 +320,8 @@ export function AllCalls() {
               <button className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Alerts">
                 <span className="material-symbols-outlined text-[19px]">notifications</span>
               </button>
-              <button className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Refresh">
-                <span className="material-symbols-outlined text-[19px] transition-transform duration-500 hover:rotate-180">refresh</span>
+              <button onClick={fetchCalls} className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Refresh">
+                <span className={`material-symbols-outlined text-[19px] transition-transform duration-500 hover:rotate-180 ${loading ? 'animate-spin' : ''}`}>refresh</span>
               </button>
               <button className="flex items-center gap-2 px-3.5 h-9 rounded-lg border border-surface-container-highest bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold tracking-wide transition-colors shadow-sm">
                 <span className="material-symbols-outlined text-[17px] text-outline">download</span>
@@ -66,12 +340,12 @@ export function AllCalls() {
 
           {/* 5 Metric Stat Cards (Row across matching reference) */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-6">
-            <MetricCard variant="small" title="Total Calls" value={isTableView ? '4' : '0'} icon="call" color="primary" />
-            <MetricCard variant="small" title="Customer Bill" value={isTableView ? '₹116.40' : '₹0.00'} icon={<span className="font-bold text-[15px] text-secondary leading-none">₹</span>} color="secondary" />
-            <MetricCard variant="small" title="Total Duration" value={isTableView ? '14m 39s' : '—'} icon="timer" color="tertiary" />
-            <MetricCard variant="small" title="Avg Cost / Call" value={isTableView ? '₹29.10' : '₹0.00'} icon="trending_up" color="amber" />
+            <MetricCard variant="small" title="Total Calls" value={isTableView ? filteredCalls.length.toString() : '0'} icon="call" color="primary" />
+            <MetricCard variant="small" title="Customer Bill" value={customerBill} icon={<span className="font-bold text-[15px] text-secondary leading-none">₹</span>} color="secondary" />
+            <MetricCard variant="small" title="Total Duration" value={totalDurationStr} icon="timer" color="tertiary" />
+            <MetricCard variant="small" title="Avg Cost / Call" value={avgCostStr} icon="trending_up" color="amber" />
             <div className="col-span-2 md:col-span-1">
-              <MetricCard variant="small" title="Avg Duration" value={isTableView ? '3m 40s' : '—'} icon="schedule" color="tertiary" />
+              <MetricCard variant="small" title="Avg Duration" value={avgDurationStr} icon="schedule" color="tertiary" />
             </div>
           </div>
 
@@ -80,7 +354,17 @@ export function AllCalls() {
             <div className="flex flex-wrap items-center gap-2.5">
               {/* Search Input */}
               <div className="flex-1 min-w-[240px] relative flex items-center bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3 py-2 text-sm">
-                <input id="searchInput" className="w-full bg-transparent font-body-sm text-body-sm text-on-surface placeholder-outline focus:outline-none border-none ring-0 p-0" placeholder="Search contact name or phone number..." type="text" />
+                <input 
+                  id="searchInput" 
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1); // Reset to page 1 on search
+                  }}
+                  className="w-full bg-transparent font-body-sm text-body-sm text-on-surface placeholder-outline focus:outline-none border-none ring-0 p-0" 
+                  placeholder="Search contact name or phone number..." 
+                  type="text" 
+                />
               </div>
               
               {/* Dropdown 1: All Agents */}
@@ -91,7 +375,7 @@ export function AllCalls() {
                 </button>
                 {agentsMenuOpen && (
                   <div className="absolute left-0 top-full mt-1.5 w-48 bg-surface-container-high border border-surface-container-highest rounded-xl shadow-2xl z-30 p-1.5 text-xs flex flex-col gap-0.5 backdrop-blur-xl">
-                    {['All Agents', 'Maya V2', 'John A.', 'Sarah K.'].map((agent) => (
+                    {['All Agents', 'Maya V2'].map((agent) => (
                       <button key={agent} className={`w-full text-left px-3 py-2 rounded-lg hover:bg-surface-container-highest flex items-center justify-between ${selectedAgent === agent ? 'text-primary font-medium' : 'text-on-surface'}`} onClick={() => { setSelectedAgent(agent); setAgentsMenuOpen(false); }}>
                         <span className="">{agent}</span>
                         {selectedAgent === agent && <span className="material-symbols-outlined text-[16px]">check</span>}
@@ -101,7 +385,7 @@ export function AllCalls() {
                 )}
               </div>
               
-              {/* Dropdown 3: All Statuses */}
+              {/* Dropdown 3: Statuses */}
               <div className="relative">
                 <button className="flex items-center justify-between gap-3 bg-surface-container-high/70 hover:bg-surface-container-high border border-surface-container-highest rounded-xl px-3.5 py-2 text-sm text-on-surface transition-colors cursor-pointer" onClick={() => { setStatusMenuOpen(!statusMenuOpen); setAgentsMenuOpen(false); }}>
                   <span className="">{selectedStatus}</span>
@@ -110,8 +394,8 @@ export function AllCalls() {
                 {statusMenuOpen && (
                   <div className="absolute left-0 top-full mt-1.5 w-48 bg-surface-container-high border border-surface-container-highest rounded-xl shadow-2xl z-40 py-1.5 text-xs flex flex-col backdrop-blur-xl divide-y divide-surface-container-highest/40">
                     <div className="p-1">
-                      {['All Statuses', 'Pending', 'In Progress', 'Answered', 'No Answer', 'Busy', 'Failed', 'Completed', 'Converted'].map((status) => (
-                        <button key={status} className={`w-full text-left px-3 py-1.5 rounded-lg hover:bg-surface-container-highest flex items-center justify-between ${selectedStatus === status ? 'text-primary font-medium' : 'text-on-surface'}`} onClick={() => { setSelectedStatus(status); setStatusMenuOpen(false); }}>
+                      {statuses.map((status) => (
+                        <button key={status} className={`w-full text-left px-3 py-1.5 rounded-lg hover:bg-surface-container-highest flex items-center justify-between ${selectedStatus === status ? 'text-primary font-medium' : 'text-on-surface'}`} onClick={() => { setSelectedStatus(status); setStatusMenuOpen(false); setCurrentPage(1); }}>
                           <span>{status}</span>
                           {selectedStatus === status && <span className="material-symbols-outlined text-[16px]">check</span>}
                         </button>
@@ -145,30 +429,38 @@ export function AllCalls() {
               <div className="flex items-center gap-2">
                 <span className="font-label-md text-xs uppercase tracking-wider text-outline font-semibold">Records Feed</span>
                 <span className="inline-block w-1 h-1 rounded-full bg-outline"></span>
-                <span className="font-mono-label text-[11px] text-tertiary">{isTableView ? '4 Active Records' : 'Ready'}</span>
+                <span className="font-mono-label text-[11px] text-tertiary">{loading ? 'Loading...' : `${filteredCalls.length} Active Records`}</span>
               </div>
-              {/* Toggle between Empty State and Live Logs Preview */}
               <div className="flex items-center gap-2">
                 <button className="flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface-container-high hover:bg-surface-container-highest text-on-surface border border-surface-container-highest transition-colors cursor-pointer" onClick={() => setIsTableView(!isTableView)}>
                   <span className="material-symbols-outlined text-[15px] text-primary">{isTableView ? 'phone_disabled' : 'table_view'}</span>
-                  <span className="">{isTableView ? 'Show Empty State (Default)' : 'Preview Sample Records (4)'}</span>
+                  <span className="">{isTableView ? 'Show Empty State' : 'Show Records'}</span>
                 </button>
               </div>
             </div>
             
-            {/* View 1: Empty State */}
-            {!isTableView && (
+            {/* View 1: Empty State or Loading */}
+            {(!isTableView || filteredCalls.length === 0) && (
               <div className="flex flex-col items-center justify-center py-24 px-4 text-center my-auto flex-1">
-                <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-outline/40 mb-3.5 ring-8 ring-surface-container-high/20">
-                  <span className="material-symbols-outlined text-[32px]">phone_disabled</span>
-                </div>
-                <p className="text-base text-outline font-medium tracking-wide">No call logs found</p>
-                <p className="text-xs text-outline/70 mt-1 max-w-sm">No outbound or inbound calls match your selected date range and filter criteria.</p>
+                {loading ? (
+                  <>
+                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <p className="text-base text-outline font-medium tracking-wide">Fetching records...</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-16 h-16 rounded-full bg-surface-container-high flex items-center justify-center text-outline/40 mb-3.5 ring-8 ring-surface-container-high/20">
+                      <span className="material-symbols-outlined text-[32px]">phone_disabled</span>
+                    </div>
+                    <p className="text-base text-outline font-medium tracking-wide">No call logs found</p>
+                    <p className="text-xs text-outline/70 mt-1 max-w-sm">No calls match your selected filters.</p>
+                  </>
+                )}
               </div>
             )}
             
             {/* View 2: Full Call Records Table */}
-            {isTableView && (
+            {(isTableView && filteredCalls.length > 0) && (
               <div className="overflow-x-auto w-full flex-1">
                 <table className="w-full text-left border-collapse">
                   <thead>
@@ -183,142 +475,63 @@ export function AllCalls() {
                     </tr>
                   </thead>
                   <tbody className="font-body-sm text-xs text-on-surface divide-y divide-surface-container-high/40">
-                    {/* Row 1 */}
-                    <tr className="hover:bg-surface-container-high/40 transition-colors group cursor-pointer" onClick={() => openDrawer('CALL-9821')}>
-                      <td className="py-3.5 pl-6 pr-4 min-w-[200px]">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shrink-0">
-                            <span className="material-symbols-outlined text-[17px]">call_received</span>
-                          </div>
+                    {currentCalls.map((call) => (
+                      <tr key={call.id} className="hover:bg-surface-container-high/40 transition-colors group cursor-pointer" onClick={() => openDrawer(call)}>
+                        <td className="py-3.5 pl-6 pr-4 min-w-[200px]">
                           <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-on-surface group-hover:text-primary transition-colors truncate">+1 (415) 890-2341</span>
-                            <span className="text-outline text-[11px] truncate">Marcus Sterling</span>
+                            <span className="font-semibold text-on-surface group-hover:text-primary transition-colors truncate">{call.phone || 'Unknown'}</span>
+                            <span className="text-outline text-[11px] truncate">{call.customer_name || 'No Name Provided'}</span>
                           </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-md bg-secondary-container/40 text-secondary font-medium text-[11px]">Maya V2</span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-tertiary-container/30 text-tertiary font-medium text-[11px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Answered
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono-label text-outline">4m 38s</td>
-                      <td className="py-3.5 px-4 font-mono-label font-medium text-on-surface">₹34.50</td>
-                      <td className="py-3.5 px-4 text-outline font-mono-label text-[11px]">Oct 24, 10:48 AM</td>
-                      <td className="py-3.5 pl-4 pr-6 text-right">
-                        <button className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-on-primary transition-colors" onClick={(e) => { e.stopPropagation(); openDrawer('CALL-9821'); }}>
-                          <span className="material-symbols-outlined text-[15px]">description</span>
-                          <span className="">View Transcript</span>
-                        </button>
-                      </td>
-                    </tr>
-                    
-                    {/* Row 2 */}
-                    <tr className="hover:bg-surface-container-high/40 transition-colors group cursor-pointer" onClick={() => openDrawer('CALL-9820')}>
-                      <td className="py-3.5 pl-6 pr-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-outline shrink-0">
-                            <span className="material-symbols-outlined text-[17px]">call_made</span>
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-on-surface group-hover:text-primary transition-colors truncate">+1 (206) 555-0199</span>
-                            <span className="text-outline text-[11px] truncate">Elena Rostova</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-md bg-primary-container/40 text-primary font-medium text-[11px]">John A.</span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-secondary-container/40 text-secondary font-medium text-[11px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span> Converted
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono-label text-outline">2m 14s</td>
-                      <td className="py-3.5 px-4 font-mono-label font-medium text-on-surface">₹17.20</td>
-                      <td className="py-3.5 px-4 text-outline font-mono-label text-[11px]">Oct 24, 10:15 AM</td>
-                      <td className="py-3.5 pl-4 pr-6 text-right">
-                        <button className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-on-primary transition-colors" onClick={(e) => { e.stopPropagation(); openDrawer('CALL-9820'); }}>
-                          <span className="material-symbols-outlined text-[15px]">description</span>
-                          <span className="">View Transcript</span>
-                        </button>
-                      </td>
-                    </tr>
-                    
-                    {/* Row 3 */}
-                    <tr className="hover:bg-surface-container-high/40 transition-colors group cursor-pointer" onClick={() => openDrawer('CALL-9818')}>
-                      <td className="py-3.5 pl-6 pr-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-error shrink-0">
-                            <span className="material-symbols-outlined text-[17px]">phone_missed</span>
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-on-surface group-hover:text-primary transition-colors truncate">+1 (312) 441-9012</span>
-                            <span className="text-outline text-[11px] truncate">David Chen</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-md bg-secondary-container/40 text-secondary font-medium text-[11px]">Maya V2</span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-error-container/50 text-error font-medium text-[11px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-error"></span> Failed / Drop
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono-label text-outline">1m 02s</td>
-                      <td className="py-3.5 px-4 font-mono-label font-medium text-on-surface">₹9.00</td>
-                      <td className="py-3.5 px-4 text-outline font-mono-label text-[11px]">Oct 24, 09:20 AM</td>
-                      <td className="py-3.5 pl-4 pr-6 text-right">
-                        <button className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-on-primary transition-colors" onClick={(e) => { e.stopPropagation(); openDrawer('CALL-9818'); }}>
-                          <span className="material-symbols-outlined text-[15px]">description</span>
-                          <span className="">View Transcript</span>
-                        </button>
-                      </td>
-                    </tr>
-                    
-                    {/* Row 4 */}
-                    <tr className="hover:bg-surface-container-high/40 transition-colors group cursor-pointer" onClick={() => openDrawer('CALL-9819')}>
-                      <td className="py-3.5 pl-6 pr-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary shrink-0">
-                            <span className="material-symbols-outlined text-[17px]">call_received</span>
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <span className="font-semibold text-on-surface group-hover:text-primary transition-colors truncate">+34 91 901 8842</span>
-                            <span className="text-outline text-[11px] truncate">Carlos Alvarez</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="px-2 py-0.5 rounded-md bg-tertiary-container/40 text-tertiary font-medium text-[11px]">Sarah K.</span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-tertiary-container/30 text-tertiary font-medium text-[11px]">
-                          <span className="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Completed
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 font-mono-label text-outline">6m 45s</td>
-                      <td className="py-3.5 px-4 font-mono-label font-medium text-on-surface">₹55.70</td>
-                      <td className="py-3.5 px-4 text-outline font-mono-label text-[11px]">Oct 24, 09:55 AM</td>
-                      <td className="py-3.5 pl-4 pr-6 text-right">
-                        <button className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-on-primary transition-colors" onClick={(e) => { e.stopPropagation(); openDrawer('CALL-9819'); }}>
-                          <span className="material-symbols-outlined text-[15px]">description</span>
-                          <span className="">View Transcript</span>
-                        </button>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2 py-0.5 rounded-md bg-secondary-container/40 text-secondary font-medium text-[11px]">Maya V2</span>
+                        </td>
+                        <td className="py-3.5 px-4">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-medium text-[11px] ${getStatusColor(getDerivedStatus(call))}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${getStatusDotColor(getDerivedStatus(call))}`}></span> {getDerivedStatus(call)}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 font-mono-label text-outline">
+                          {formatDuration(call.duration_seconds ?? call.estimated_duration)}
+                          {(call.duration_seconds === null || call.duration_seconds === undefined) && call.estimated_duration !== null && call.estimated_duration !== undefined && (
+                            <span className="text-[9px] text-outline ml-1">(est)</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 font-mono-label font-medium text-on-surface">
+                          {formatCost(call.duration_seconds ?? call.estimated_duration)}
+                        </td>
+                        <td className="py-3.5 px-4 text-outline font-mono-label text-[11px]">{formatDate(call.started_at)}</td>
+                        <td className="py-3.5 pl-4 pr-6 text-right">
+                          <button className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[11px] font-semibold text-primary bg-primary/10 hover:bg-primary hover:text-on-primary transition-colors" onClick={(e) => { e.stopPropagation(); openDrawer(call); }}>
+                            <span className="material-symbols-outlined text-[15px]">description</span>
+                            <span className="">View Transcript</span>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
-                {/* Table Footer Pagination */}
-                <div className="px-6 py-3.5 bg-surface-container-high/20 border-t border-surface-container-high/60 flex items-center justify-between text-xs text-outline">
-                  <span className="">Showing 1 to 4 of 4 active entries</span>
-                  <div className="flex items-center gap-1">
-                    <button className="px-2.5 py-1 rounded bg-surface-container-high text-outline hover:text-on-surface">Prev</button>
-                    <button className="px-2.5 py-1 rounded bg-primary text-on-primary font-semibold">1</button>
-                    <button className="px-2.5 py-1 rounded bg-surface-container-high text-outline hover:text-on-surface">Next</button>
+                
+                {/* Pagination Controls */}
+                <div className="px-6 py-4 flex items-center justify-between border-t border-surface-container-high/40 bg-surface-container-low/30">
+                  <span className="text-[11px] text-outline font-medium">
+                    Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCalls.length)} of {filteredCalls.length} records
+                  </span>
+                  <div className="flex gap-2">
+                    <button 
+                      disabled={currentPage === 1} 
+                      onClick={() => setCurrentPage(p => p - 1)}
+                      className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-surface-container-highest text-on-surface text-[11px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      Previous
+                    </button>
+                    <button 
+                      disabled={currentPage >= totalPages || totalPages === 0} 
+                      onClick={() => setCurrentPage(p => p + 1)}
+                      className="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high border border-surface-container-highest text-on-surface text-[11px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    >
+                      Next
+                    </button>
                   </div>
                 </div>
               </div>
@@ -335,10 +548,12 @@ export function AllCalls() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-headline-md text-base font-semibold text-on-surface">Session {selectedCallId}</h3>
-                  <span className="font-mono-label text-[10px] uppercase px-2 py-0.5 rounded bg-tertiary-container/40 text-tertiary font-semibold">Answered</span>
+                  <h3 className="font-headline-md text-base font-semibold text-on-surface">Session {selectedCall?.id.slice(0,8)}</h3>
+                  <span className={`font-mono-label text-[10px] uppercase px-2 py-0.5 rounded font-semibold ${getStatusColor(selectedCall ? getDerivedStatus(selectedCall) : undefined)}`}>
+                    {selectedCall ? getDerivedStatus(selectedCall) : ''}
+                  </span>
                 </div>
-                <span className="font-body-sm text-xs text-outline">+1 (415) 890-2341 • Marcus Sterling</span>
+                <span className="font-body-sm text-xs text-outline">{selectedCall?.phone} • {selectedCall?.customer_name}</span>
               </div>
             </div>
             <button className="w-9 h-9 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-outline hover:text-on-surface flex items-center justify-center transition-colors" onClick={closeDrawer}>
@@ -355,60 +570,98 @@ export function AllCalls() {
               </span>
             </div>
             <div className="p-2.5 rounded-xl bg-surface-container-low border border-surface-container-high/60">
-              <span className="font-label-md text-outline uppercase block text-[10px]">Latency (p90)</span>
-              <span className="font-mono-label text-xs font-semibold text-primary mt-0.5 block">395 ms</span>
+              <span className="font-label-md text-outline uppercase block text-[10px]">Duration</span>
+              <span className="font-mono-label text-xs font-semibold text-primary mt-0.5 block">
+                {formatDuration(displayDuration)}
+                {(selectedCall?.duration_seconds === null || selectedCall?.duration_seconds === undefined) && displayDuration !== null && (
+                  <span className="text-[9px] text-outline ml-1">(est)</span>
+                )}
+              </span>
             </div>
             <div className="p-2.5 rounded-xl bg-surface-container-low border border-surface-container-high/60">
               <span className="font-label-md text-outline uppercase block text-[10px]">Total Cost</span>
-              <span className="font-mono-label text-xs font-semibold text-on-surface mt-0.5 block">₹34.50</span>
+              <span className="font-mono-label text-xs font-semibold text-on-surface mt-0.5 block">{formatCost(displayDuration)}</span>
             </div>
           </div>
 
           {/* Drawer Conversation Transcript Stream */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            <span className="font-mono-label text-[11px] text-outline uppercase tracking-wider block text-center">Transcript Started 10:48:12 AM</span>
+          {drawerViewMode === 'summary' ? (
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col">
+              <div className="flex items-center gap-2 mb-6 border-b border-surface-container-high pb-4">
+                <span className="material-symbols-outlined text-tertiary text-2xl">auto_awesome</span>
+                <h4 className="font-headline-md text-lg font-bold text-on-surface">AI Summary</h4>
+              </div>
+              
+              {isSummarizing ? (
+                <div className="flex flex-col items-center justify-center flex-1 py-10 opacity-70">
+                  <div className="w-8 h-8 border-4 border-tertiary border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="font-body-md text-sm text-outline animate-pulse">Analyzing conversation context...</p>
+                </div>
+              ) : (
+                <div className="bg-surface-container-low border border-surface-container-high rounded-xl p-5 leading-relaxed font-body-sm text-sm text-on-surface-variant">
+                  {summary}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <span className="font-mono-label text-[11px] text-outline uppercase tracking-wider block text-center">
+              Transcript Started {selectedCall?.started_at ? formatDate(selectedCall.started_at) : '...'}
+            </span>
             
-            <div className="flex flex-col items-start max-w-[85%]">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-label-md text-xs text-primary font-semibold">Maya V2 (AI Agent)</span>
-                <span className="font-mono-label text-[10px] text-outline">00:02</span>
+            {loadingMessages ? (
+              <div className="flex justify-center py-10">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
               </div>
-              <div className="p-3.5 rounded-2xl rounded-tl-none bg-surface-container-high text-on-surface font-body-sm text-xs shadow-sm leading-relaxed">
-                Hello Marcus! Thanks for reaching out to Zryth Realty Partners. I see you were reviewing the Presidio Commercial portfolio. How can I assist you today?
-              </div>
+            ) : messages.length === 0 ? (
+              <div className="text-center py-10 text-outline text-sm">No messages available for this call.</div>
+            ) : (
+              messages.map((msg) => (
+                msg.speaker === 'maya' ? (
+                  <div key={msg.id} className="flex flex-col items-start max-w-[85%]">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-label-md text-xs text-primary font-semibold">Maya V2 (AI Agent)</span>
+                      <span className="font-mono-label text-[10px] text-outline">{new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                    </div>
+                    <div className="p-3.5 rounded-2xl rounded-tl-none bg-surface-container-high text-on-surface font-body-sm text-xs shadow-sm leading-relaxed">
+                      {msg.message}
+                    </div>
+                  </div>
+                ) : (
+                  <div key={msg.id} className="flex flex-col items-end self-end max-w-[85%] ml-auto">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-mono-label text-[10px] text-outline">{new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</span>
+                      <span className="font-label-md text-xs text-on-surface font-semibold">{selectedCall?.customer_name || 'Customer'}</span>
+                    </div>
+                    <div className="p-3.5 rounded-2xl rounded-tr-none bg-surface-container-low border border-surface-container-high/80 text-on-surface font-body-sm text-xs shadow-sm leading-relaxed">
+                      {msg.message}
+                    </div>
+                  </div>
+                )
+              ))
+            )}
             </div>
-
-            <div className="flex flex-col items-end self-end max-w-[85%] ml-auto">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-mono-label text-[10px] text-outline">00:15</span>
-                <span className="font-label-md text-xs text-on-surface font-semibold">Marcus Sterling</span>
-              </div>
-              <div className="p-3.5 rounded-2xl rounded-tr-none bg-surface-container-low border border-surface-container-high/80 text-on-surface font-body-sm text-xs shadow-sm leading-relaxed">
-                Hi Maya, we have an immediate requirement for an 85,000 sq ft biotech lab conversion. Can you verify HVAC zoning before this Thursday?
-              </div>
-            </div>
-
-            <div className="flex flex-col items-start max-w-[85%]">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-label-md text-xs text-primary font-semibold">Maya V2 (AI Agent)</span>
-                <span className="font-mono-label text-[10px] text-outline">00:32</span>
-              </div>
-              <div className="p-3.5 rounded-2xl rounded-tl-none bg-surface-container-high text-on-surface font-body-sm text-xs shadow-sm leading-relaxed">
-                Yes, I have pulled the architectural MEP schematics and flagged your inquiry to Senior Asset Director Sarah. I've sent the specifications to your email.
-              </div>
-            </div>
-          </div>
+          )}
 
           {/* Drawer Footer Actions */}
           <div className="p-4 bg-surface-container-low flex items-center justify-between gap-3 border-t border-surface-container-high">
-            <Link to={`/calls/${selectedCallId || 'CALL-9821'}`} className="flex-1 py-2 px-4 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-semibold text-xs transition-colors flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined text-[17px]">open_in_new</span>
-              <span className="">Full Page View</span>
-            </Link>
-            <button className="flex-1 py-2 px-4 rounded-xl bg-primary-container text-on-primary-container font-semibold text-xs transition-transform active:scale-95 flex items-center justify-center gap-2 shadow">
-              <span className="material-symbols-outlined text-[17px]">download</span>
-              <span className="">Download Audio (.wav)</span>
-            </button>
+            {drawerViewMode === 'transcript' ? (
+              <button 
+                onClick={handleSummarize}
+                className="w-full py-2 px-4 rounded-xl bg-tertiary/20 hover:bg-tertiary/30 text-tertiary border border-tertiary/30 font-semibold text-xs transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[17px]">auto_awesome</span>
+                <span className="">AI Summarizer</span>
+              </button>
+            ) : (
+              <button 
+                onClick={() => setDrawerViewMode('transcript')}
+                className="w-full py-2 px-4 rounded-xl bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-semibold text-xs transition-colors flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[17px]">description</span>
+                <span className="">View Transcript</span>
+              </button>
+            )}
           </div>
         </Drawer>
 

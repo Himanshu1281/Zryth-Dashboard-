@@ -1,13 +1,36 @@
-import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { AuthLayout } from '../components/AuthLayout';
+import { useAuth } from '../context/AuthContext';
 
 export function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, signInWithGoogle } = useAuth();
+  
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // The ProtectedRoute passes the location we tried to access before redirecting here
+  const from = location.state?.from?.pathname || '/';
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/analytics');
+    setError('');
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await login({ email, password });
+      if (error) throw error;
+      navigate(from, { replace: true });
+    } catch (err: any) {
+      setError(err.message || 'Failed to sign in. Please check your credentials.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -16,6 +39,12 @@ export function Login() {
         <h2 className="font-headline-lg text-3xl lg:text-3xl font-semibold text-on-surface mb-2">Welcome back</h2>
         <p className="font-body-sm text-sm text-on-surface-variant">Sign in to your enterprise dashboard.</p>
       </div>
+      
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-error/10 border border-error/20 text-error text-sm">
+          {error}
+        </div>
+      )}
       
       <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
         {/* Email Field */}
@@ -27,7 +56,8 @@ export function Login() {
             placeholder="name@company.com" 
             required 
             type="email"
-            defaultValue="admin@acmerealty.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
         
@@ -37,23 +67,37 @@ export function Login() {
             <label className="font-label-md text-xs font-semibold text-on-surface tracking-wide uppercase" htmlFor="password">Password</label>
             <a className="font-label-md text-xs font-semibold text-primary hover:text-primary-fixed transition-colors" href="#">Forgot Password?</a>
           </div>
-          <input 
-            className="bg-surface-container-low border border-outline-variant/30 rounded-lg px-4 py-3 font-body-sm text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" 
-            id="password" 
-            placeholder="••••••••" 
-            required 
-            type="password"
-            defaultValue="password123"
-          />
+          <div className="relative">
+            <input 
+              className="w-full bg-surface-container-low border border-outline-variant/30 rounded-lg pl-4 pr-11 py-3 font-body-sm text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors" 
+              id="password" 
+              placeholder="••••••••" 
+              required 
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors focus:outline-none flex items-center justify-center p-1"
+              tabIndex={-1}
+            >
+              <span className="material-symbols-outlined text-[20px]">
+                {showPassword ? 'visibility_off' : 'visibility'}
+              </span>
+            </button>
+          </div>
         </div>
         
         {/* Sign In Button */}
         <button 
-          className="mt-4 w-full bg-primary-container text-on-primary-container font-label-md text-sm font-semibold tracking-wide py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-container/90 transition-all active:scale-[0.98] shadow-[0_0_24px_rgba(37,99,235,0.15)]" 
+          className="mt-4 w-full bg-primary-container text-on-primary-container font-label-md text-sm font-semibold tracking-wide py-3 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-primary-container/90 transition-all active:scale-[0.98] shadow-[0_0_24px_rgba(37,99,235,0.15)] disabled:opacity-70 disabled:cursor-not-allowed" 
           type="submit"
+          disabled={isSubmitting}
         >
-          Sign In
-          <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+          {isSubmitting ? 'Signing in...' : 'Sign In'}
+          {!isSubmitting && <span className="material-symbols-outlined text-[18px]">arrow_forward</span>}
         </button>
       </form>
       
@@ -73,6 +117,7 @@ export function Login() {
       
       {/* Google SSO */}
       <button 
+        onClick={signInWithGoogle}
         className="w-full bg-transparent border border-outline-variant/30 text-on-surface font-label-md text-sm font-semibold tracking-wide py-3 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-white/5 transition-colors" 
         type="button"
       >

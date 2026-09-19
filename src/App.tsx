@@ -13,6 +13,8 @@ import { Settings } from './pages/Settings';
 import { VoiceAgents } from './pages/VoiceAgents';
 import { PhoneNumbers } from './pages/PhoneNumbers';
 
+import { ProtectedRoute } from './components/ProtectedRoute';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -23,15 +25,16 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/analytics" element={<Analytics />} />
-            <Route path="/calls" element={<AllCalls />} />
-            <Route path="/calls/:id" element={<CallTranscript />} />
-            <Route path="/knowledge" element={<KnowledgeBase />} />
-
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/agents" element={<VoiceAgents />} />
-            <Route path="/phone-numbers" element={<PhoneNumbers />} />
+            
+            {/* Protected Routes */}
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+            <Route path="/calls" element={<ProtectedRoute><AllCalls /></ProtectedRoute>} />
+            <Route path="/calls/:id" element={<ProtectedRoute><CallTranscript /></ProtectedRoute>} />
+            <Route path="/knowledge" element={<ProtectedRoute><KnowledgeBase /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/agents" element={<ProtectedRoute><VoiceAgents /></ProtectedRoute>} />
+            <Route path="/phone-numbers" element={<ProtectedRoute><PhoneNumbers /></ProtectedRoute>} />
           </Routes>
         </BrowserRouter>
       </AuthProvider>

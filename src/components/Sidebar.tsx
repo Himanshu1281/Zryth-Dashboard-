@@ -1,7 +1,19 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Failed to log out', error);
+    }
+  };
 
   const isPathActive = (path: string) => {
     return location.pathname === path;
@@ -137,13 +149,13 @@ export function Sidebar() {
             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>help</span>
             <span>Support</span>
           </Link>
-          <Link
-            to="/login"
-            className="flex items-center gap-3 px-3.5 py-2 text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors duration-200 rounded-lg font-body-sm text-sm"
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-3 px-3.5 py-2 text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors duration-200 rounded-lg font-body-sm text-sm w-full text-left"
           >
             <span className="material-symbols-outlined" style={{ fontSize: '20px' }}>logout</span>
             <span>Sign Out</span>
-          </Link>
+          </button>
         </div>
         <div className="px-3 py-2 rounded-lg bg-white/[0.02] border border-white/5 flex items-center justify-between text-mono-label text-xs mt-1">
           <span className="flex items-center gap-2 text-tertiary font-mono-label">
