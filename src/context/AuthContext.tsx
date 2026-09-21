@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../config/supabase';
 
@@ -19,23 +19,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const login: typeof supabase.auth.signInWithPassword = async (credentials) => {
+  const login = useCallback<typeof supabase.auth.signInWithPassword>(async (credentials) => {
     return supabase.auth.signInWithPassword(credentials);
-  };
+  }, []);
 
-  const signup: typeof supabase.auth.signUp = async (credentials) => {
+  const signup = useCallback<typeof supabase.auth.signUp>(async (credentials) => {
     return supabase.auth.signUp(credentials);
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await supabase.auth.signOut();
-  };
+  }, []);
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = useCallback(async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
     });
-  };
+  }, []);
 
   useEffect(() => {
     // Get initial session
@@ -55,8 +55,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const value = useMemo(() => ({
+    currentUser, session, loading, login, signup, logout, signInWithGoogle
+  }), [currentUser, session, loading, login, signup, logout, signInWithGoogle]);
+
   return (
-    <AuthContext.Provider value={{ currentUser, session, loading, login, signup, logout, signInWithGoogle }}>
+    <AuthContext.Provider value={value}>
       {!loading && children}
     </AuthContext.Provider>
   );

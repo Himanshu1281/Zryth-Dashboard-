@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './context/AuthContext';
 import { Login } from './pages/Login';
@@ -35,7 +35,7 @@ function App() {
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/agents" element={<ProtectedRoute><VoiceAgents /></ProtectedRoute>} />
             <Route path="/phone-numbers" element={<ProtectedRoute><PhoneNumbers /></ProtectedRoute>} />
-          </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />`n          </Routes>
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>

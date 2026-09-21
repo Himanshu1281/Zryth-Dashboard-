@@ -15,6 +15,7 @@ export const useMetrics = () => {
       const response = await apiClient.get('/metrics');
       return response.data.data;
     },
-    refetchInterval: 30000, // Refetch every 30s
+    refetchInterval: 30000,
+    refetchIntervalInBackground: false, // Refetch every 30s
   });
 };

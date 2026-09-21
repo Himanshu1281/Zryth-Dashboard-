@@ -1,51 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useCallsWithMessages } from '../hooks/useCalls';
 import { Link } from 'react-router-dom';
 import { Layout } from '../components/Layout';
 import { supabase } from '../config/supabase';
 
 export function Dashboard() {
-  const [calls, setCalls] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCalls = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('calls')
-          .select('*, messages(id, created_at)')
-          .order('started_at', { ascending: false });
-
-        if (error) throw error;
-        
-        const callsData = data || [];
-        
-        // Fetch estimated duration for calls that crashed/ongoing
-        callsData.forEach((call: any) => {
-          if ((call.duration_seconds === null || call.duration_seconds === undefined) && call.messages && call.messages.length > 0) {
-            // Find the latest message timestamp
-            const lastMsg = call.messages.reduce((latest: any, msg: any) => {
-              return new Date(msg.created_at) > new Date(latest.created_at) ? msg : latest;
-            }, call.messages[0]);
-                
-            const start = new Date(call.started_at);
-            const end = new Date(lastMsg.created_at);
-            const diff = Math.floor((end.getTime() - start.getTime()) / 1000);
-            if (diff > 0) {
-              call.estimated_duration = diff;
-            }
-          }
-        });
-
-        setCalls(callsData);
-      } catch (err) {
-        console.error('Error fetching calls:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchCalls();
-  }, []);
+  const { data: calls = [], isLoading: loading } = useCallsWithMessages();
 
   const getDerivedStatus = (call: any) => {
     if (call.status) return call.status;
@@ -67,26 +27,38 @@ export function Dashboard() {
   };
 
   // Calculate Metrics
-  const totalCalls = calls.length;
-  
-  const connectedCalls = calls.filter(c => {
-    const s = getDerivedStatus(c);
-    return s === 'Completed' || s === 'Converted' || s === 'Transferred';
-  }).length;
+  const metrics = useMemo(() => {
+    let connected = 0;
+    let failed = 0;
+    let converted = 0;
+    let totalDuration = 0;
+    const agents = new Set<string>();
 
-  const failedCalls = calls.filter(c => {
-    const s = getDerivedStatus(c);
-    return s === 'Failed' || s === 'Missed' || s === 'Interrupted';
-  }).length;
+    for (const c of calls) {
+      const s = getDerivedStatus(c);
+      if (s === 'Completed' || s === 'Converted' || s === 'Transferred') connected++;
+      if (s === 'Failed' || s === 'Missed' || s === 'Interrupted') failed++;
+      if (s === 'Converted') converted++;
+      totalDuration += (c.duration_seconds ?? c.estimated_duration ?? 0);
+      if (c.agent_id) agents.add(c.agent_id);
+    }
 
-  const totalDuration = calls.reduce((acc, curr) => acc + (curr.duration_seconds ?? curr.estimated_duration ?? 0), 0);
-  const avgDurationSec = totalCalls > 0 ? Math.floor(totalDuration / totalCalls) : 0;
-  const avgDurationFormatted = `${Math.floor(avgDurationSec / 60)}m ${avgDurationSec % 60}s`;
+    const total = calls.length;
+    const avgDurationSec = total > 0 ? Math.floor(totalDuration / total) : 0;
+    
+    return {
+      totalCalls: total,
+      connectedCalls: connected,
+      failedCalls: failed,
+      totalDuration,
+      avgDurationFormatted: `${Math.floor(avgDurationSec / 60)}m ${avgDurationSec % 60}s`,
+      convertedCalls: converted,
+      conversionRate: total > 0 ? Math.round((converted / total) * 100) : 0,
+      uniqueAgents: agents.size
+    };
+  }, [calls]);
 
-  const convertedCalls = calls.filter(c => getDerivedStatus(c) === 'Converted').length;
-  const conversionRate = totalCalls > 0 ? Math.round((convertedCalls / totalCalls) * 100) : 0;
-
-  const uniqueAgents = new Set(calls.map(c => c.agent_id).filter(Boolean)).size;
+  const { totalCalls, connectedCalls, failedCalls, avgDurationFormatted, conversionRate, uniqueAgents } = metrics;
 
   // Chart Data Preparation (Last 14 Days)
   const chartData = [];

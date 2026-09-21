@@ -1,33 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useCallsWithMessages } from '../hooks/useCalls';
 import { Layout } from '../components/Layout';
 import { Link } from 'react-router-dom';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Drawer } from '../components/ui/Drawer';
 import { supabase } from '../config/supabase';
+import type { CallData, MessageData } from '../types';
 
-interface CallData {
-  id: string;
-  livekit_room: string;
-  phone: string;
-  customer_name: string;
-  language: string;
-  started_at: string;
-  ended_at: string | null;
-  duration_seconds: number | null;
-  requirement: string;
-  agent_id: string;
-  status?: string;
-  estimated_duration?: number | null;
-  messages?: { id: string; created_at: string }[];
-}
 
-interface MessageData {
-  id: string;
-  call_id: string;
-  speaker: 'customer' | 'maya';
-  message: string;
-  created_at: string;
-}
 
 export function AllCalls() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -285,7 +265,14 @@ ${transcriptText}`;
   });
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredCalls.length / itemsPerPage);
+  const totalPages = Math.max(1, Math.ceil(filteredCalls.length / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [filteredCalls.length, totalPages]);
+
   const currentCalls = filteredCalls.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage

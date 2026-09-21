@@ -1,50 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useCallsWithMessages } from '../hooks/useCalls';
 import { Layout } from '../components/Layout';
 import { supabase } from '../config/supabase';
 
 export function Analytics() {
-  const [calls, setCalls] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCalls = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('calls')
-          .select('*, messages(id, created_at)')
-          .order('started_at', { ascending: false });
-
-        if (error) throw error;
-        
-        const callsData = data || [];
-        
-        // Fetch estimated duration for calls that crashed/ongoing
-        callsData.forEach((call: any) => {
-          if ((call.duration_seconds === null || call.duration_seconds === undefined) && call.messages && call.messages.length > 0) {
-            // Find the latest message timestamp
-            const lastMsg = call.messages.reduce((latest: any, msg: any) => {
-              return new Date(msg.created_at) > new Date(latest.created_at) ? msg : latest;
-            }, call.messages[0]);
-                
-            const start = new Date(call.started_at);
-            const end = new Date(lastMsg.created_at);
-            const diff = Math.floor((end.getTime() - start.getTime()) / 1000);
-            if (diff > 0) {
-              call.estimated_duration = diff;
-            }
-          }
-        });
-
-        setCalls(callsData);
-      } catch (err) {
-        console.error('Error fetching calls:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchCalls();
-  }, []);
+  const { data: calls = [], isLoading: loading } = useCallsWithMessages();
 
   const getDerivedStatus = (call: any) => {
     if (call.status) return call.status;
