@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useCallsWithMessages } from '../hooks/useCalls';
 import { Layout } from '../components/Layout';
 import { supabase } from '../config/supabase';
+import * as XLSX from 'xlsx';
 
 export function Analytics() {
   const { data: calls = [], isLoading: loading } = useCallsWithMessages();
@@ -148,6 +149,38 @@ export function Analytics() {
   
   const longestStr = `${Math.floor(longestDuration / 60)}m ${longestDuration % 60}s`;
 
+  const handleDownloadReport = () => {
+    if (calls.length === 0) {
+      alert("No data available to download.");
+      return;
+    }
+
+    const reportData = [
+      { Metric: "Total AI Calls", Value: totalCalls },
+      { Metric: "Average Call Duration", Value: avgDurationFormatted },
+      { Metric: "Average Cost / Call", Value: `₹${avgCostPerCall}` },
+      { Metric: "Transfer Rate", Value: `${transferRate}%` },
+      { Metric: "Completed Calls", Value: completed },
+      { Metric: "Transferred Calls", Value: transferred },
+      { Metric: "Missed/Failed Calls", Value: missedFailed },
+      { Metric: "Converted Calls", Value: converted },
+      { Metric: "Containment Rate", Value: `${mainContainmentRate}%` },
+      { Metric: "Longest Session", Value: longestStr },
+      { Metric: "Most Common Duration Bucket", Value: bucketLabels[mostCommonIdx] },
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+    
+    // Auto adjust column width
+    worksheet['!cols'] = [{ wch: 35 }, { wch: 15 }];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Analytics Report");
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Analytics_Report_${dateStr}.xlsx`);
+  };
+
   return (
     <Layout disablePadding={true} title="Analytics - Zryth AI Voice">
       <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
@@ -162,8 +195,9 @@ export function Analytics() {
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>calendar_today</span>
               <span>Last 14 Days</span>
             </div>
-            <button className="p-1.5 rounded-lg bg-surface-container-high border border-white/10 text-on-surface-variant hover:text-on-surface" title="Download Report">
-              <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>download</span>
+            <button onClick={handleDownloadReport} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high border border-white/10 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" title="Download Report">
+              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span>
+              <span>Download Report</span>
             </button>
           </div>
         </section>

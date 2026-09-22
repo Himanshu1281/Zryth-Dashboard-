@@ -379,7 +379,7 @@ export function Settings() {
               </div>
               <h2 className="text-xl font-bold text-on-surface mb-2">Delete Account?</h2>
               <p className="text-sm text-on-surface-variant mb-6">
-                Are you absolutely sure you want to delete your account? All of your data, including your Supabase profile and Firebase authentication record, will be permanently erased.
+                Are you absolutely sure you want to delete your account? All your data records will be permanently erased and cannot be retrieved.
               </p>
               
               <label className="block text-xs font-semibold text-on-surface-variant uppercase mb-2">

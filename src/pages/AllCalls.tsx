@@ -6,6 +6,7 @@ import { MetricCard } from '../components/ui/MetricCard';
 import { Drawer } from '../components/ui/Drawer';
 import { supabase } from '../config/supabase';
 import type { CallData, MessageData } from '../types';
+import * as XLSX from 'xlsx';
 
 
 
@@ -19,6 +20,8 @@ export function AllCalls() {
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
   const [selectedAgent, setSelectedAgent] = useState('All Agents');
   const [searchQuery, setSearchQuery] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -172,10 +175,36 @@ ${transcriptText}`;
     setSelectedStatus('All Statuses');
     setSelectedAgent('All Agents');
     setSearchQuery('');
+    setFromDate('');
+    setToDate('');
     setCurrentPage(1);
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
     if (searchInput) searchInput.value = '';
     setIsTableView(true);
+  };
+
+  const handleDownloadExcel = () => {
+    if (filteredCalls.length === 0) {
+      alert("No records to download");
+      return;
+    }
+
+    const dataToExport = filteredCalls.map(call => ({
+      'Phone Number': call.phone || 'Unknown',
+      'Customer Name': call.customer_name || 'No Name Provided',
+      'Assigned Agent': 'Maya V2',
+      'Status': getDerivedStatus(call),
+      'Duration': formatDuration(call.duration_seconds ?? call.estimated_duration),
+      'Cost': formatCost(call.duration_seconds ?? call.estimated_duration),
+      'Date & Time': formatDate(call.started_at)
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Call Records");
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Call_Records_${dateStr}.xlsx`);
   };
 
   const formatDuration = (seconds: number | null | undefined) => {
@@ -261,6 +290,16 @@ ${transcriptText}`;
       }
     }
     
+    // 3. Date Filter
+    if (fromDate) {
+      if (new Date(call.started_at) < new Date(fromDate)) return false;
+    }
+    if (toDate) {
+      const endDate = new Date(toDate);
+      endDate.setHours(23, 59, 59, 999);
+      if (new Date(call.started_at) > endDate) return false;
+    }
+    
     return true;
   });
 
@@ -307,10 +346,10 @@ ${transcriptText}`;
               <button className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Alerts">
                 <span className="material-symbols-outlined text-[19px]">notifications</span>
               </button>
-              <button onClick={fetchCalls} className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Refresh">
+              <button onClick={() => fetchCalls()} className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Refresh">
                 <span className={`material-symbols-outlined text-[19px] transition-transform duration-500 hover:rotate-180 ${loading ? 'animate-spin' : ''}`}>refresh</span>
               </button>
-              <button className="flex items-center gap-2 px-3.5 h-9 rounded-lg border border-surface-container-highest bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold tracking-wide transition-colors shadow-sm">
+              <button onClick={handleDownloadExcel} className="flex items-center gap-2 px-3.5 h-9 rounded-lg border border-surface-container-highest bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold tracking-wide transition-colors shadow-sm">
                 <span className="material-symbols-outlined text-[17px] text-outline">download</span>
                 <span className="">Download Records</span>
               </button>
@@ -393,14 +432,24 @@ ${transcriptText}`;
               </div>
               
               {/* Date Picker 1 */}
-              <div className="flex items-center justify-between gap-2 bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3 py-2 text-sm text-outline cursor-pointer hover:border-outline transition-colors">
-                <span className="text-xs">dd-mm-yyyy</span>
-                <span className="material-symbols-outlined text-[17px] text-outline">calendar_today</span>
+              <div className="flex items-center bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3 py-1.5 text-sm text-outline hover:border-outline transition-colors">
+                <input 
+                  type="date" 
+                  value={fromDate}
+                  onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }}
+                  className="bg-transparent text-xs outline-none border-none text-on-surface cursor-pointer"
+                  title="From Date"
+                />
               </div>
               {/* Date Picker 2 */}
-              <div className="flex items-center justify-between gap-2 bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3 py-2 text-sm text-outline cursor-pointer hover:border-outline transition-colors">
-                <span className="text-xs">dd-mm-yyyy</span>
-                <span className="material-symbols-outlined text-[17px] text-outline">calendar_today</span>
+              <div className="flex items-center bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3 py-1.5 text-sm text-outline hover:border-outline transition-colors">
+                <input 
+                  type="date" 
+                  value={toDate}
+                  onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }}
+                  className="bg-transparent text-xs outline-none border-none text-on-surface cursor-pointer"
+                  title="To Date"
+                />
               </div>
               {/* Clear All Text Button */}
               <button className="text-xs text-outline hover:text-primary transition-colors ml-1 font-medium px-2 py-1 cursor-pointer" onClick={clearFilters}>

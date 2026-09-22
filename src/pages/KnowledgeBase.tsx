@@ -8,6 +8,11 @@ export function KnowledgeBase() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState<string | null>(null);
+
   const fetchFiles = async () => {
     try {
       setLoading(true);
@@ -73,21 +78,31 @@ export function KnowledgeBase() {
     }
   };
 
-  const handleDelete = async (fileName: string) => {
-    if (!window.confirm(`Are you sure you want to delete ${fileName}?`)) return;
+  const handleDelete = (fileName: string) => {
+    setDocumentToDelete(fileName);
+    setDeleteConfirmation('');
+    setShowDeleteModal(true);
+  };
 
+  const confirmDelete = async () => {
+    if (deleteConfirmation !== 'DELETE' || !documentToDelete) return;
+
+    setIsDeleting(true);
     try {
-      // Delete the actual PDF file from the Storage bucket.
       const { error } = await supabase.storage
         .from('knowledge_base')
-        .remove([fileName]);
+        .remove([documentToDelete]);
 
       if (error) throw error;
       
       await fetchFiles();
+      setShowDeleteModal(false);
+      setDocumentToDelete(null);
     } catch (error: any) {
       console.error('Error deleting file:', error);
       alert(error.message || 'Error deleting file.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -267,6 +282,51 @@ export function KnowledgeBase() {
           </div>
         </section>
       </div>
+
+      {/* Delete Document Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface-container-low border border-surface-container-high rounded-2xl w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-error-container text-error flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-[28px]">warning</span>
+              </div>
+              <h2 className="text-xl font-bold text-on-surface mb-2">Delete Document?</h2>
+              <p className="text-sm text-on-surface-variant mb-6">
+                Are you absolutely sure you want to delete <span className="font-semibold text-on-surface">{documentToDelete}</span>?
+              </p>
+              
+              <label className="block text-xs font-semibold text-on-surface-variant uppercase mb-2">
+                Type <span className="text-error font-bold tracking-wider">DELETE</span> to confirm
+              </label>
+              <input 
+                type="text"
+                value={deleteConfirmation}
+                onChange={(e) => setDeleteConfirmation(e.target.value)}
+                className="w-full bg-surface-container border border-error/50 rounded-lg px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-error transition-colors placeholder:text-outline"
+                placeholder="DELETE"
+              />
+            </div>
+            <div className="p-4 border-t border-surface-container-high bg-surface-container flex justify-end gap-3">
+              <button 
+                onClick={() => { setShowDeleteModal(false); setDeleteConfirmation(''); setDocumentToDelete(null); }}
+                className="px-4 py-2 rounded-lg hover:bg-surface-container-high text-on-surface text-sm font-medium transition-colors"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete}
+                disabled={deleteConfirmation !== 'DELETE' || isDeleting}
+                className="px-4 py-2 rounded-lg bg-error hover:bg-error/90 text-on-error text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isDeleting && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>}
+                {isDeleting ? 'Deleting...' : 'Delete Document'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }
