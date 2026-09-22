@@ -103,6 +103,21 @@ export function Settings() {
     }
   };
 
+  const getInitials = () => {
+    if (fullName) {
+      const parts = fullName.trim().split(' ').filter(p => p.length > 0);
+      if (parts.length > 1) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      } else if (parts.length === 1) {
+        return (parts[0][0] + (parts[0].length > 1 ? parts[0][1] : '')).toUpperCase();
+      }
+    }
+    if (email) {
+      return email.slice(0, 2).toUpperCase();
+    }
+    return 'US';
+  };
+
   return (
     <Layout disablePadding={true} title="Settings">
       <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
@@ -161,7 +176,7 @@ export function Settings() {
                 <div className="flex items-center gap-4">
                   <div className="relative group">
                     <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary-container via-secondary-container to-tertiary flex items-center justify-center text-white font-headline-md font-bold shadow-lg shadow-primary/20 uppercase">
-                      {fullName ? fullName.slice(0, 2) : email ? email.slice(0, 2) : 'US'}
+                      {getInitials()}
                     </div>
                     <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
                       <span className="material-symbols-outlined text-white text-[20px]">photo_camera</span>

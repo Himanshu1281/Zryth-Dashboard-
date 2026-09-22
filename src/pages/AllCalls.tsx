@@ -7,8 +7,8 @@ import { Drawer } from '../components/ui/Drawer';
 import { supabase } from '../config/supabase';
 import type { CallData, MessageData } from '../types';
 import * as XLSX from 'xlsx';
-
-
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export function AllCalls() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -20,8 +20,8 @@ export function AllCalls() {
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
   const [selectedAgent, setSelectedAgent] = useState('All Agents');
   const [searchQuery, setSearchQuery] = useState('');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -175,8 +175,8 @@ ${transcriptText}`;
     setSelectedStatus('All Statuses');
     setSelectedAgent('All Agents');
     setSearchQuery('');
-    setFromDate('');
-    setToDate('');
+    setFromDate(null);
+    setToDate(null);
     setCurrentPage(1);
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
     if (searchInput) searchInput.value = '';
@@ -292,7 +292,7 @@ ${transcriptText}`;
     
     // 3. Date Filter
     if (fromDate) {
-      if (new Date(call.started_at) < new Date(fromDate)) return false;
+      if (new Date(call.started_at) < fromDate) return false;
     }
     if (toDate) {
       const endDate = new Date(toDate);
@@ -343,9 +343,6 @@ ${transcriptText}`;
             <p className="text-sm text-neutral-400 mt-0.5">All outbound call attempts and results</p>
           </div>
             <div className="flex items-center gap-2.5 self-start sm:self-auto">
-              <button className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Alerts">
-                <span className="material-symbols-outlined text-[19px]">notifications</span>
-              </button>
               <button onClick={() => fetchCalls()} className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Refresh">
                 <span className={`material-symbols-outlined text-[19px] transition-transform duration-500 hover:rotate-180 ${loading ? 'animate-spin' : ''}`}>refresh</span>
               </button>
@@ -432,23 +429,30 @@ ${transcriptText}`;
               </div>
               
               {/* Date Picker 1 */}
-              <div className="flex items-center bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3 py-1.5 text-sm text-outline hover:border-outline transition-colors">
-                <input 
-                  type="date" 
-                  value={fromDate}
-                  onChange={(e) => { setFromDate(e.target.value); setCurrentPage(1); }}
-                  className="bg-transparent text-xs outline-none border-none text-on-surface cursor-pointer"
-                  title="From Date"
+              <div className="flex items-center bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3.5 py-2 text-sm text-outline hover:border-outline transition-colors z-[100] relative">
+                <DatePicker
+                  selected={fromDate}
+                  onChange={(date: Date | null) => { setFromDate(date); setCurrentPage(1); }}
+                  selectsStart
+                  startDate={fromDate || undefined}
+                  endDate={toDate || undefined}
+                  placeholderText="From Date"
+                  className="bg-transparent text-sm outline-none border-none text-on-surface cursor-pointer w-24 p-0"
+                  dateFormat="MMM d, yyyy"
                 />
               </div>
               {/* Date Picker 2 */}
-              <div className="flex items-center bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3 py-1.5 text-sm text-outline hover:border-outline transition-colors">
-                <input 
-                  type="date" 
-                  value={toDate}
-                  onChange={(e) => { setToDate(e.target.value); setCurrentPage(1); }}
-                  className="bg-transparent text-xs outline-none border-none text-on-surface cursor-pointer"
-                  title="To Date"
+              <div className="flex items-center bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3.5 py-2 text-sm text-outline hover:border-outline transition-colors z-[100] relative">
+                <DatePicker
+                  selected={toDate}
+                  onChange={(date: Date | null) => { setToDate(date); setCurrentPage(1); }}
+                  selectsEnd
+                  startDate={fromDate || undefined}
+                  endDate={toDate || undefined}
+                  minDate={fromDate || undefined}
+                  placeholderText="To Date"
+                  className="bg-transparent text-sm outline-none border-none text-on-surface cursor-pointer w-24 p-0"
+                  dateFormat="MMM d, yyyy"
                 />
               </div>
               {/* Clear All Text Button */}

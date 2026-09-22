@@ -8,11 +8,17 @@ export function Analytics() {
   const { data: calls = [], isLoading: loading } = useCallsWithMessages();
 
   const getDerivedStatus = (call: any) => {
-    if (call.status) return call.status;
-    
     const msgCount = call.messages?.length || 0;
+    
+    // Strict rule: <= 1 message is always Failed. 
     if (msgCount <= 1) {
       return 'Failed';
+    }
+    
+    // If the database status says 'Failed' but there are >= 2 messages, 
+    // we ignore it and calculate based on the logic below.
+    if (call.status && call.status.toLowerCase() !== 'failed') {
+      return call.status;
     }
     
     if (!call.ended_at) {
@@ -191,10 +197,6 @@ export function Analytics() {
             <p className="text-sm text-neutral-400 mt-0.5">Insights across all your campaigns and agents.</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-container-high border border-white/10 text-xs font-medium text-on-surface-variant">
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>calendar_today</span>
-              <span>Last 14 Days</span>
-            </div>
             <button onClick={handleDownloadReport} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high border border-white/10 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" title="Download Report">
               <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span>
               <span>Download Report</span>
@@ -249,6 +251,7 @@ export function Analytics() {
         <div className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl p-6">
           <div className="relative z-10 flex items-center justify-between mb-4">
             <h3 className="text-base font-semibold text-on-surface tracking-tight">Calls Per Day</h3>
+            <span className="text-[11px] font-mono text-neutral-400 bg-neutral-800/80 px-2 py-0.5 rounded border border-neutral-700/60">Last 14 Days</span>
           </div>
           
           {/* Chart Canvas */}
@@ -338,9 +341,9 @@ export function Analytics() {
                     <span className="w-2.5 h-2.5 rounded-full bg-blue-600 shrink-0"></span>
                     <span className="text-on-surface font-medium">Completed</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-on-surface font-mono-label font-semibold">{completed}</span>
-                    <span className="text-on-surface-variant text-[11px] font-mono-label">{(pctCompleted * 100).toFixed(1)}%</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-on-surface font-mono-label font-semibold text-[13px]">{completed}</span>
+                    <span className="text-on-surface-variant text-[10px] font-mono-label bg-surface-container px-1.5 py-0.5 rounded min-w-[46px] text-center border border-surface-container-highest">{(pctCompleted * 100).toFixed(1)}%</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02] border border-white/5">
@@ -348,9 +351,9 @@ export function Analytics() {
                     <span className="w-2.5 h-2.5 rounded-full bg-teal-600 shrink-0"></span>
                     <span className="text-on-surface font-medium">Transferred</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-on-surface font-mono-label font-semibold">{transferred}</span>
-                    <span className="text-on-surface-variant text-[11px] font-mono-label">{(pctTransferred * 100).toFixed(1)}%</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-on-surface font-mono-label font-semibold text-[13px]">{transferred}</span>
+                    <span className="text-on-surface-variant text-[10px] font-mono-label bg-surface-container px-1.5 py-0.5 rounded min-w-[46px] text-center border border-surface-container-highest">{(pctTransferred * 100).toFixed(1)}%</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02] border border-white/5">
@@ -358,9 +361,9 @@ export function Analytics() {
                     <span className="w-2.5 h-2.5 rounded-full bg-purple-600 shrink-0"></span>
                     <span className="text-on-surface font-medium">Missed/Failed</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-on-surface font-mono-label font-semibold">{missedFailed}</span>
-                    <span className="text-on-surface-variant text-[11px] font-mono-label">{(pctMissed * 100).toFixed(1)}%</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-on-surface font-mono-label font-semibold text-[13px]">{missedFailed}</span>
+                    <span className="text-on-surface-variant text-[10px] font-mono-label bg-surface-container px-1.5 py-0.5 rounded min-w-[46px] text-center border border-surface-container-highest">{(pctMissed * 100).toFixed(1)}%</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between p-2 rounded-lg bg-white/[0.02] border border-white/5">
@@ -368,9 +371,9 @@ export function Analytics() {
                     <span className="w-2.5 h-2.5 rounded-full bg-pink-600 shrink-0"></span>
                     <span className="text-on-surface font-medium">Converted</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-on-surface font-mono-label font-semibold">{converted}</span>
-                    <span className="text-on-surface-variant text-[11px] font-mono-label">{(pctConverted * 100).toFixed(1)}%</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-on-surface font-mono-label font-semibold text-[13px]">{converted}</span>
+                    <span className="text-on-surface-variant text-[10px] font-mono-label bg-surface-container px-1.5 py-0.5 rounded min-w-[46px] text-center border border-surface-container-highest">{(pctConverted * 100).toFixed(1)}%</span>
                   </div>
                 </div>
               </div>

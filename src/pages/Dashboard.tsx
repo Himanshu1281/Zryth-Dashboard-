@@ -8,11 +8,17 @@ export function Dashboard() {
   const { data: calls = [], isLoading: loading } = useCallsWithMessages();
 
   const getDerivedStatus = (call: any) => {
-    if (call.status) return call.status;
-    
     const msgCount = call.messages?.length || 0;
+    
+    // Strict rule: <= 1 message is always Failed. 
     if (msgCount <= 1) {
       return 'Failed';
+    }
+    
+    // If the database status says 'Failed' but there are >= 2 messages, 
+    // we ignore it and calculate based on the logic below.
+    if (call.status && call.status.toLowerCase() !== 'failed') {
+      return call.status;
     }
     
     if (!call.ended_at) {
@@ -27,20 +33,57 @@ export function Dashboard() {
   };
 
   // Calculate Metrics
+  const [activeAgentsCount, setActiveAgentsCount] = useState(0);
+
+  useEffect(() => {
+    const fetchActiveAgents = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/agent_status?select=*`, {
+          headers: {
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          },
+          cache: 'no-store'
+        });
+        
+        const data = await response.json();
+        
+        if (data && Array.isArray(data)) {
+          // Consider agent active if status is 'active' or heartbeat is within last 30s
+          const active = data.filter(a => {
+            if (a.status === 'active') return true;
+            if (a.last_heartbeat) {
+              const hb = new Date(a.last_heartbeat).getTime();
+              if (Date.now() - hb < 30000) return true;
+            }
+            return false;
+          }).length;
+          setActiveAgentsCount(active);
+        }
+      } catch (err) {
+        console.error('Error fetching active agents:', err);
+      }
+    };
+    fetchActiveAgents();
+  }, []);
+
   const metrics = useMemo(() => {
     let connected = 0;
     let failed = 0;
     let converted = 0;
     let totalDuration = 0;
-    const agents = new Set<string>();
+
+    let interrupted = 0;
 
     for (const c of calls) {
       const s = getDerivedStatus(c);
       if (s === 'Completed' || s === 'Converted' || s === 'Transferred') connected++;
-      if (s === 'Failed' || s === 'Missed' || s === 'Interrupted') failed++;
+      if (s === 'Failed' || s === 'Missed') failed++;
+      if (s === 'Interrupted') interrupted++;
       if (s === 'Converted') converted++;
       totalDuration += (c.duration_seconds ?? c.estimated_duration ?? 0);
-      if (c.agent_id) agents.add(c.agent_id);
     }
 
     const total = calls.length;
@@ -50,15 +93,15 @@ export function Dashboard() {
       totalCalls: total,
       connectedCalls: connected,
       failedCalls: failed,
+      interruptedCalls: interrupted,
       totalDuration,
       avgDurationFormatted: `${Math.floor(avgDurationSec / 60)}m ${avgDurationSec % 60}s`,
       convertedCalls: converted,
-      conversionRate: total > 0 ? Math.round((converted / total) * 100) : 0,
-      uniqueAgents: agents.size
+      conversionRate: total > 0 ? Math.round((converted / total) * 100) : 0
     };
   }, [calls]);
 
-  const { totalCalls, connectedCalls, failedCalls, avgDurationFormatted, conversionRate, uniqueAgents } = metrics;
+  const { totalCalls, connectedCalls, failedCalls, interruptedCalls, avgDurationFormatted, conversionRate } = metrics;
 
   // Chart Data Preparation (Last 14 Days)
   const chartData = [];
@@ -172,6 +215,19 @@ export function Dashboard() {
               <div className="text-xl font-bold text-white mt-0.5">{loading ? '...' : failedCalls}</div>
             </div>
           </div>
+
+          {/* Metric 5.5: Interrupted Calls */}
+          <div className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl p-4 flex items-center gap-4 hover:border-neutral-700 transition">
+            <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+              </svg>
+            </div>
+            <div>
+              <div className="text-xs text-neutral-400 font-medium">Interrupted Calls</div>
+              <div className="text-xl font-bold text-white mt-0.5">{loading ? '...' : interruptedCalls}</div>
+            </div>
+          </div>
           
           {/* Metric 6: Avg Duration */}
           <div className="bg-[#1c1b1c] border border-[rgba(255,255,255,0.08)] rounded-xl p-4 flex items-center gap-4 hover:border-neutral-700 transition">
@@ -208,7 +264,7 @@ export function Dashboard() {
             </div>
             <div>
               <div className="text-xs text-neutral-400 font-medium">Active Agents</div>
-              <div className="text-xl font-bold text-white mt-0.5">{loading ? '...' : uniqueAgents}</div>
+              <div className="text-xl font-bold text-white mt-0.5">{loading ? '...' : activeAgentsCount}</div>
             </div>
           </div>
         </section>

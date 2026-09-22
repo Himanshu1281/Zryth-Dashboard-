@@ -1,11 +1,13 @@
 import { Layout } from '../components/Layout';
 import { useState, useEffect } from 'react';
+import { supabase } from '../config/supabase';
 
 export function PhoneNumbers() {
   const [showModal, setShowModal] = useState(false);
   const [vobizNumbers, setVobizNumbers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [inventoryNumbers, setInventoryNumbers] = useState<any[]>([]);
+  const [agentPhoneMap, setAgentPhoneMap] = useState<Record<string, string>>({});
   const [inventoryLoading, setInventoryLoading] = useState(false);
   const [inventoryPage, setInventoryPage] = useState(1);
   const [inventoryTotalPages, setInventoryTotalPages] = useState(1);
@@ -83,20 +85,49 @@ export function PhoneNumbers() {
     }
   }, [showModal, debouncedSearchQuery]);
 
+  // Fetch agent-to-phone mapping from Supabase calls table
+  const fetchAgentPhoneMapping = async () => {
+    try {
+      // Get distinct phone numbers used by agents from calls table
+      const { data, error } = await supabase
+        .from('calls')
+        .select('agent_id, phone_number')
+        .not('phone_number', 'is', null)
+        .not('agent_id', 'is', null);
+      
+      if (data && !error) {
+        const map: Record<string, string> = {};
+        data.forEach((call: any) => {
+          if (call.phone_number && call.agent_id) {
+            const normalized = call.phone_number.replace(/\s/g, '');
+            const agentName = call.agent_id === 'maya_v2' ? 'Maya V2' : call.agent_id;
+            map[normalized] = agentName;
+          }
+        });
+        console.log('[Agent Mapping] From calls table:', map);
+        setAgentPhoneMap(map);
+      }
+    } catch (err) {
+      console.warn('Could not fetch agent-phone mapping:', err);
+    }
+  };
+
   const fetchVobizNumbers = async () => {
     setLoading(true);
     try {
       const authId = import.meta.env.VITE_VOBIZ_AUTH_ID;
       const authToken = import.meta.env.VITE_VOBIZ_AUTH_TOKEN;
+      const headers = {
+        "X-Auth-ID": authId,
+        "X-Auth-Token": authToken,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      };
       
+      // Fetch phone numbers
       const response = await fetch(`https://api.vobiz.ai/api/v1/Account/${authId}/numbers`, {
         method: "GET",
-        headers: {
-          "X-Auth-ID": authId,
-          "X-Auth-Token": authToken,
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
+        headers,
       });
 
       const raw = await response.text();
@@ -135,13 +166,44 @@ export function PhoneNumbers() {
 
   useEffect(() => {
     fetchVobizNumbers();
+    fetchAgentPhoneMapping();
   }, []);
 
   const totalNumbers = vobizNumbers.length;
   const activeNumbers = vobizNumbers.filter(n => n.status === 'active').length;
-  const unassignedNumbers = totalNumbers; // Assuming all are unassigned for now until agent mapping is built
+  const getAgentName = (numberObj: any) => {
+    const phoneNumber = numberObj.e164 || numberObj.number || numberObj.phone_number || '';
+    
+    // Check direct match from Supabase calls table mapping
+    if (agentPhoneMap[phoneNumber]) return agentPhoneMap[phoneNumber];
+    
+    // Check without + prefix
+    const withoutPlus = phoneNumber.replace(/^\+/, '');
+    if (agentPhoneMap[`+${withoutPlus}`]) return agentPhoneMap[`+${withoutPlus}`];
+    
+    // Normalize and check variants
+    const digits = phoneNumber.replace(/[^0-9]/g, '');
+    for (const [mappedNum, agentName] of Object.entries(agentPhoneMap)) {
+      const mappedDigits = mappedNum.replace(/[^0-9]/g, '');
+      if (digits && mappedDigits && (digits.endsWith(mappedDigits) || mappedDigits.endsWith(digits))) {
+        return agentName;
+      }
+    }
+    
+    // Fallback for this specific project: since there's no Vobiz app mapping
+    // and Maya V2 is the only agent handling calls, assume numbers are assigned to it.
+    // In a multi-agent system, this would require a DB table like `agent_phone_numbers`.
+    if (numberObj.status === 'active') {
+      return 'Maya V2';
+    }
+    
+    return null;
+  };
+  const unassignedNumbers = vobizNumbers.filter(n => !getAgentName(n)).length;
   const totalRenewal = vobizNumbers.reduce((sum, n) => sum + (n.monthly_fee || 0), 0);
   const currencySymbol = vobizNumbers.length > 0 ? (vobizNumbers[0].currency === 'INR' ? '₹' : '$') : '₹';
+
+
 
   return (
     <Layout disablePadding={true} title="Phone Numbers">
@@ -267,7 +329,7 @@ export function PhoneNumbers() {
                   vobizNumbers
                     .filter((numberObj) => {
                       if (activeTab === 'active') return numberObj.status === 'active';
-                      if (activeTab === 'unassigned') return !numberObj.assigned_to;
+                      if (activeTab === 'unassigned') return !getAgentName(numberObj);
                       return true;
                     })
                     .map((numberObj: any, index: number) => (
@@ -288,9 +350,16 @@ export function PhoneNumbers() {
                         </div>
                       </td>
                       <td className="py-3.5 px-4">
-                        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary-container/20 border border-primary-container/30 text-primary font-medium">
-                          <span>Unassigned</span>
-                        </div>
+                        {getAgentName(numberObj) ? (
+                          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-tertiary-container/20 border border-tertiary/20 text-tertiary font-medium">
+                            <span className="w-1.5 h-1.5 rounded-full bg-tertiary animate-pulse"></span>
+                            <span>{getAgentName(numberObj)}</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-primary-container/20 border border-primary-container/30 text-primary font-medium">
+                            <span>Unassigned</span>
+                          </div>
+                        )}
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-1.5">

@@ -1,6 +1,7 @@
 import { Layout } from '../components/Layout';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../config/supabase';
+import { useCallsWithMessages } from '../hooks/useCalls';
 
 
 export function VoiceAgents() {
@@ -8,73 +9,48 @@ export function VoiceAgents() {
   const [isActive, setIsActive] = useState(false);
   const lastHeartbeatRef = useRef<number>(0);
 
-  const [totalCalls, setTotalCalls] = useState(0);
-  const [avgDurationStr, setAvgDurationStr] = useState('0m 0s');
-  const [resolutionPct, setResolutionPct] = useState('0%');
+  const { data: calls = [] } = useCallsWithMessages();
 
-  useEffect(() => {
-    async function fetchMetrics() {
-      const { data, error } = await supabase.from('calls').select('*, messages(id, created_at)');
-      if (error) {
-        console.error('Error fetching calls:', error);
-        return;
+  const { totalCalls, avgDurationStr, resolutionPct } = useMemo(() => {
+    const total = calls.length;
+    if (total === 0) return { totalCalls: 0, avgDurationStr: '0m 0s', resolutionPct: '0%' };
+
+    const getDerivedStatus = (call: any) => {
+      const msgCount = call.messages?.length || 0;
+      if (msgCount <= 1) return 'Failed';
+      if (call.status && call.status.toLowerCase() !== 'failed') return call.status;
+      if (!call.ended_at) {
+        const req = call.requirement?.trim().toLowerCase() || '';
+        if (req && !req.includes('none') && req !== 'null') return 'Converted';
+        return 'Interrupted';
       }
-      if (!data) return;
+      return 'Completed';
+    };
 
-      const total = data.length;
-      setTotalCalls(total);
+    let totalDuration = 0;
+    let completedCount = 0;
 
-      if (total === 0) return;
-
-      const getDerivedStatus = (call: any) => {
-        if (call.status) return call.status;
-        
-        const msgCount = call.messages?.length || 0;
-        if (msgCount <= 1) {
-          return 'Failed';
-        }
-        
-        if (!call.ended_at) {
-          const req = call.requirement?.trim().toLowerCase() || '';
-          if (req && !req.includes('none') && req !== 'null') {
-            return 'Converted';
-          }
-          return 'Interrupted';
-        }
-        
-        return 'Completed';
-      };
-
-      let totalDuration = 0;
-      let validDurations = 0;
-      let completedCount = 0;
-
-      data.forEach(call => {
-        const duration = call.duration_seconds || call.estimated_duration || 0;
-        if (duration > 0) {
-          totalDuration += duration;
-          validDurations++;
-        }
-        
-        const status = getDerivedStatus(call);
-        if (status === 'Completed' || status === 'Converted') {
-          completedCount++;
-        }
-      });
-
-      if (validDurations > 0) {
-        const avgSeconds = Math.round(totalDuration / validDurations);
-        const mins = Math.floor(avgSeconds / 60);
-        const secs = avgSeconds % 60;
-        setAvgDurationStr(`${mins}m ${secs}s`);
+    calls.forEach(call => {
+      totalDuration += (call.duration_seconds ?? call.estimated_duration ?? 0);
+      
+      const status = getDerivedStatus(call);
+      if (status === 'Completed' || status === 'Converted') {
+        completedCount++;
       }
+    });
 
-      const resPct = ((completedCount / total) * 100).toFixed(1);
-      setResolutionPct(`${resPct}%`);
-    }
+    const avgSeconds = Math.floor(totalDuration / total);
+    const mins = Math.floor(avgSeconds / 60);
+    const secs = avgSeconds % 60;
+    
+    const resPct = ((completedCount / total) * 100).toFixed(1);
 
-    fetchMetrics();
-  }, []);
+    return {
+      totalCalls: total,
+      avgDurationStr: `${mins}m ${secs}s`,
+      resolutionPct: `${resPct}%`
+    };
+  }, [calls]);
 
 
   
