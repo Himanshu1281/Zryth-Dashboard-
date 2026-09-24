@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Layout } from '../components/Layout';
+import { Layout } from '../layouts/Layout';
 import { supabase } from '../config/supabase';
 import { useAuth } from '../context/AuthContext';
 
@@ -20,6 +20,9 @@ export function Settings() {
   const [phone, setPhone] = useState('');
   const [company, setCompany] = useState('');
   const [timezone, setTimezone] = useState('est');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const navigate = useNavigate();
   const { currentUser, logout } = useAuth();
@@ -44,6 +47,7 @@ export function Settings() {
         if (data.role) setRole(data.role);
         if (data.phone) setPhone(data.phone);
         if (data.timezone) setTimezone(data.timezone);
+        if (data.avatar_url) setAvatarUrl(data.avatar_url);
       }
     }
     loadProfile();
@@ -61,13 +65,15 @@ export function Settings() {
           company: company,
           role: role,
           phone: phone,
-          timezone: timezone
+          timezone: timezone,
+          avatar_url: avatarUrl
         })
         .eq('id', currentUser.id);
     }
     
     setIsSaving(false);
     setSaveSuccess(true);
+    window.dispatchEvent(new Event('profileUpdated'));
     setTimeout(() => setSaveSuccess(false), 2500);
   };
 
@@ -116,6 +122,40 @@ export function Settings() {
       return email.slice(0, 2).toUpperCase();
     }
     return 'US';
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size must be less than 2MB');
+      return;
+    }
+
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarUrl(reader.result as string);
+      setIsUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = async () => {
+    setAvatarUrl('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    if (currentUser) {
+      await supabase
+        .from('users')
+        .update({ avatar_url: null })
+        .eq('id', currentUser.id);
+        
+      window.dispatchEvent(new Event('profileUpdated'));
+    }
   };
 
   return (
@@ -174,14 +214,27 @@ export function Settings() {
               {/* Avatar Management Box */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-surface-container mb-8">
                 <div className="flex items-center gap-4">
-                  <div className="relative group">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary-container via-secondary-container to-tertiary flex items-center justify-center text-white font-headline-md font-bold shadow-lg shadow-primary/20 uppercase">
-                      {getInitials()}
+                  <label className="relative group cursor-pointer block">
+                    <input 
+                      type="file" 
+                      ref={fileInputRef}
+                      onChange={handleAvatarChange}
+                      className="hidden" 
+                      accept="image/png, image/jpeg, image/webp" 
+                    />
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-primary-container via-secondary-container to-tertiary flex items-center justify-center text-white font-headline-md font-bold shadow-lg shadow-primary/20 uppercase overflow-hidden">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        getInitials()
+                      )}
                     </div>
-                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                      <span className="material-symbols-outlined text-white text-[20px]">photo_camera</span>
+                    <div className="absolute inset-0 rounded-full bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span className={`material-symbols-outlined text-white text-[20px] ${isUploading ? 'animate-spin' : ''}`}>
+                        {isUploading ? 'progress_activity' : 'photo_camera'}
+                      </span>
                     </div>
-                  </div>
+                  </label>
                   <div className="flex flex-col">
                     <span className="font-body-md font-semibold text-on-surface">{fullName || 'Unknown User'}</span>
                     <span className="font-mono-label text-outline text-[12px]">ID: {currentUser?.id?.slice(0, 8).toUpperCase() || 'UNKNOWN'}</span>
@@ -189,7 +242,7 @@ export function Settings() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 self-start sm:self-center">
-                  <button className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-error-container/30 text-on-surface-variant hover:text-error font-body-sm transition-colors flex items-center gap-1" type="button">
+                  <button onClick={handleRemoveAvatar} className="px-3 py-1.5 rounded-lg bg-surface-container-low hover:bg-error-container/30 text-on-surface-variant hover:text-error font-body-sm transition-colors flex items-center gap-1" type="button">
                     <span className="material-symbols-outlined text-[18px]">delete</span>
                     <span className="hidden sm:inline">Remove</span>
                   </button>

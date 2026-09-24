@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCallsWithMessages } from '../hooks/useCalls';
-import { Layout } from '../components/Layout';
+import { Layout } from '../layouts/Layout';
 import { supabase } from '../config/supabase';
 import * as XLSX from 'xlsx';
 
@@ -162,14 +162,14 @@ export function Analytics() {
     }
 
     const reportData = [
-      { Metric: "Total AI Calls", Value: totalCalls },
+      { Metric: "Total AI Calls", Value: String(totalCalls) },
       { Metric: "Average Call Duration", Value: avgDurationFormatted },
       { Metric: "Average Cost / Call", Value: `₹${avgCostPerCall}` },
       { Metric: "Transfer Rate", Value: `${transferRate}%` },
-      { Metric: "Completed Calls", Value: completed },
-      { Metric: "Transferred Calls", Value: transferred },
-      { Metric: "Missed/Failed Calls", Value: missedFailed },
-      { Metric: "Converted Calls", Value: converted },
+      { Metric: "Completed Calls", Value: String(completed) },
+      { Metric: "Transferred Calls", Value: String(transferred) },
+      { Metric: "Missed/Failed Calls", Value: String(missedFailed) },
+      { Metric: "Converted Calls", Value: String(converted) },
       { Metric: "Containment Rate", Value: `${mainContainmentRate}%` },
       { Metric: "Longest Session", Value: longestStr },
       { Metric: "Most Common Duration Bucket", Value: bucketLabels[mostCommonIdx] },
@@ -197,9 +197,9 @@ export function Analytics() {
             <p className="text-sm text-neutral-400 mt-0.5">Insights across all your campaigns and agents.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={handleDownloadReport} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-container-high border border-white/10 text-xs font-medium text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer" title="Download Report">
-              <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>download</span>
-              <span>Download Report</span>
+            <button onClick={handleDownloadReport} className="flex items-center gap-2 px-3.5 h-9 rounded-lg border border-surface-container-highest bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold tracking-wide transition-colors shadow-sm cursor-pointer" title="Download Report">
+              <span className="material-symbols-outlined text-[17px] text-outline">download</span>
+              <span className="">Download Report</span>
             </button>
           </div>
         </section>

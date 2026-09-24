@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout } from '../components/Layout';
+import { Layout } from '../layouts/Layout';
 import { supabase } from '../config/supabase';
 
 export function KnowledgeBase() {

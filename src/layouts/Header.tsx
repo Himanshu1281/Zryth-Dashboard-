@@ -11,37 +11,50 @@ export function Header({ title }: HeaderProps) {
   const { currentUser } = useAuth();
   const [initials, setInitials] = useState('U');
   const [fullName, setFullName] = useState('User');
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   // Extract the page name from the title, e.g., "Analytics - Zryth AI Voice" -> "Analytics"
   const pageName = title.split(' - ')[0];
 
   useEffect(() => {
-    if (currentUser) {
-      // Fetch full name from the users table
-      supabase
-        .from('users')
-        .select('full_name')
-        .eq('id', currentUser.id)
-        .single()
-        .then(({ data, error }) => {
-          let name = '';
-          if (data && data.full_name) {
-            name = data.full_name;
-          } else if (currentUser.email) {
-            name = currentUser.email.split('@')[0];
-          }
-          
-          if (name) {
-            setFullName(name);
-            const parts = name.trim().split(' ');
-            if (parts.length > 1) {
-              setInitials((parts[0][0] + parts[parts.length - 1][0]).toUpperCase());
-            } else if (parts.length === 1 && parts[0].length > 0) {
-              setInitials((parts[0][0] + (parts[0].length > 1 ? parts[0][1] : '')).toUpperCase());
+    const fetchProfile = () => {
+      if (currentUser) {
+        // Fetch full name and avatar from the users table
+        supabase
+          .from('users')
+          .select('full_name, avatar_url')
+          .eq('id', currentUser.id)
+          .single()
+          .then(({ data }) => {
+            let name = '';
+            if (data) {
+              if (data.full_name) name = data.full_name;
+              
+              if (data.avatar_url) {
+                setAvatarUrl(data.avatar_url);
+              } else {
+                setAvatarUrl(null);
+              }
+            } else if (currentUser.email) {
+              name = currentUser.email.split('@')[0];
             }
-          }
-        });
-    }
+            
+            if (name) {
+              setFullName(name);
+              const parts = name.trim().split(' ');
+              if (parts.length > 1) {
+                setInitials((parts[0][0] + parts[parts.length - 1][0]).toUpperCase());
+              } else if (parts.length === 1 && parts[0].length > 0) {
+                setInitials((parts[0][0] + (parts[0].length > 1 ? parts[0][1] : '')).toUpperCase());
+              }
+            }
+          });
+      }
+    };
+
+    fetchProfile();
+    window.addEventListener('profileUpdated', fetchProfile);
+    return () => window.removeEventListener('profileUpdated', fetchProfile);
   }, [currentUser]);
   
   return (
@@ -61,8 +74,12 @@ export function Header({ title }: HeaderProps) {
           </svg>
           <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full"></span>
         </button>
-        <Link to="/settings" className="w-8 h-8 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-700 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-white text-xs font-semibold hover:border-primary/50 transition-colors cursor-pointer" title={`Profile: ${fullName}`}>
-          {initials}
+        <Link to="/settings" className="w-8 h-8 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-700 border border-[rgba(255,255,255,0.15)] flex items-center justify-center text-white text-xs font-semibold hover:border-primary/50 transition-colors cursor-pointer overflow-hidden" title={`Profile: ${fullName}`}>
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            initials
+          )}
         </Link>
       </div>
     </header>

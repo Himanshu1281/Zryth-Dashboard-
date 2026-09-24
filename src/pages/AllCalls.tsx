@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useCallsWithMessages } from '../hooks/useCalls';
-import { Layout } from '../components/Layout';
+import { Layout } from '../layouts/Layout';
 import { Link } from 'react-router-dom';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Drawer } from '../components/ui/Drawer';

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { AuthLayout } from '../components/AuthLayout';
+import { AuthLayout } from '../layouts/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 
 export function Login() {

@@ -1,4 +1,4 @@
-import { Layout } from '../components/Layout';
+import { Layout } from '../layouts/Layout';
 import { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 
@@ -312,13 +312,12 @@ export function PhoneNumbers() {
                   <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4">Added Date</th>
                   <th className="py-3 px-4">Renewal</th>
-                  <th className="py-3 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-container-high">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-on-surface-variant text-sm">
+                    <td colSpan={6} className="py-8 text-center text-on-surface-variant text-sm">
                       <div className="flex items-center justify-center gap-2">
                         <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div>
                         Fetching Vobiz numbers...
@@ -382,19 +381,11 @@ export function PhoneNumbers() {
                       <td className="py-3.5 px-4 text-on-surface font-mono-label font-medium">
                         {numberObj.currency === 'INR' ? '₹' : '$'}{numberObj.monthly_fee || 0}<span className="text-on-surface-variant text-[10px]">/mo</span>
                       </td>
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="inline-flex items-center gap-1">
-                          <button type="button" className="px-2.5 py-1 rounded-md bg-surface-container hover:bg-surface-container-high text-on-surface border border-surface-container-high text-xs font-medium transition">Configure</button>
-                          <button type="button" className="p-1 rounded-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition">
-                            <span className="material-symbols-outlined text-[16px]">more_vert</span>
-                          </button>
-                        </div>
-                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="py-12 text-center">
+                    <td colSpan={6} className="py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
                         <div className="w-12 h-12 rounded-full bg-surface-container border border-surface-container-high flex items-center justify-center text-on-surface-variant mb-3">
                           <span className="material-symbols-outlined text-[24px]">sim_card_alert</span>

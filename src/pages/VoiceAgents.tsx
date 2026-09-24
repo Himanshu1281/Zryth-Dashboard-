@@ -1,4 +1,4 @@
-import { Layout } from '../components/Layout';
+import { Layout } from '../layouts/Layout';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../config/supabase';
 import { useCallsWithMessages } from '../hooks/useCalls';

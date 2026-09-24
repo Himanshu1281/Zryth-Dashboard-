@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCallsWithMessages } from '../hooks/useCalls';
 import { Link } from 'react-router-dom';
-import { Layout } from '../components/Layout';
+import { Layout } from '../layouts/Layout';
 import { supabase } from '../config/supabase';
 
 export function Dashboard() {

@@ -1,4 +1,4 @@
-import { Layout } from '../components/Layout';
+import { Layout } from '../layouts/Layout';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '../config/supabase';
