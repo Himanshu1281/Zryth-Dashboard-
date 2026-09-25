@@ -277,21 +277,21 @@ export function PhoneNumbers() {
                 <button 
                   onClick={() => setActiveTab('all')} 
                   type="button" 
-                  className={`px-3 py-1 rounded-md font-medium transition ${activeTab === 'all' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
+                  className={`px-3 py-1 rounded-md font-medium transition ${activeTab === 'all' ? 'bg-primary-container text-on-primary-container shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
                 >
                   All ({totalNumbers})
                 </button>
                 <button 
                   onClick={() => setActiveTab('active')} 
                   type="button" 
-                  className={`px-3 py-1 rounded-md font-medium transition ${activeTab === 'active' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
+                  className={`px-3 py-1 rounded-md font-medium transition ${activeTab === 'active' ? 'bg-primary-container text-on-primary-container shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
                 >
                   Active ({activeNumbers})
                 </button>
                 <button 
                   onClick={() => setActiveTab('unassigned')} 
                   type="button" 
-                  className={`px-3 py-1 rounded-md font-medium transition ${activeTab === 'unassigned' ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
+                  className={`px-3 py-1 rounded-md font-medium transition ${activeTab === 'unassigned' ? 'bg-primary-container text-on-primary-container shadow-sm' : 'text-on-surface-variant hover:text-on-surface'}`}
                 >
                   Unassigned ({unassignedNumbers})
                 </button>
@@ -454,7 +454,7 @@ export function PhoneNumbers() {
                           <span className="text-xs font-semibold text-on-surface">
                             {invNum.currency === 'INR' ? '₹' : '$'}{invNum.monthly_fee}<span className="text-[10px] text-on-surface-variant">/mo</span>
                           </span>
-                          <button className="px-3 py-1 bg-primary hover:bg-primary-container text-white text-[11px] font-medium rounded-md shadow-sm transition">Buy</button>
+                          <button className="px-3 py-1 bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-[11px] font-medium rounded-md shadow-sm transition">Buy</button>
                         </div>
                       </div>
                     ))

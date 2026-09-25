@@ -430,6 +430,7 @@ ${transcriptText}`;
               
               {/* Date Picker 1 */}
               <div className="flex items-center bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3.5 py-2 text-sm text-outline hover:border-outline transition-colors z-[100] relative">
+                <span className="material-symbols-outlined text-[18px] mr-2">calendar_today</span>
                 <DatePicker
                   selected={fromDate}
                   onChange={(date: Date | null) => { setFromDate(date); setCurrentPage(1); }}
@@ -443,6 +444,7 @@ ${transcriptText}`;
               </div>
               {/* Date Picker 2 */}
               <div className="flex items-center bg-surface-container-high/70 border border-surface-container-highest rounded-xl px-3.5 py-2 text-sm text-outline hover:border-outline transition-colors z-[100] relative">
+                <span className="material-symbols-outlined text-[18px] mr-2">calendar_today</span>
                 <DatePicker
                   selected={toDate}
                   onChange={(date: Date | null) => { setToDate(date); setCurrentPage(1); }}

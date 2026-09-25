@@ -339,7 +339,7 @@ export function VoiceAgents() {
 
 {isConfigDrawerOpen && (
   <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-end select-none">
-    <div className="w-full max-w-md h-full bg-[#0e0e12] border-l border-[#1f1f26] shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300">
+    <div className="w-full md:w-[40%] h-full bg-[#0e0e12] border-l border-[#1f1f26] shadow-2xl flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300">
       
       <div className="px-6 py-5 border-b border-[#1f1f26] flex items-center justify-between bg-[#111116]">
         <div className="flex items-center gap-3">
@@ -378,7 +378,7 @@ export function VoiceAgents() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1a1a22] hover:bg-[#20202b] text-blue-400 border border-blue-500/30 hover:border-blue-500 transition-colors shadow-sm"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                <span>+ Add Prompt</span>
+                <span>Add Prompt</span>
               </button>
               
               {isPromptMenuOpen && (
@@ -420,7 +420,7 @@ export function VoiceAgents() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono font-medium text-white tracking-tight truncate">{prompt.name}</span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#1c1c24] text-zinc-400 border border-[#2b2b36]">{prompt.role}</span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#1c1c24] text-blue-400/90 border border-blue-500/20">{prompt.role}</span>
                     </div>
                     <p className="text-[11px] text-zinc-400 truncate mt-0.5">{prompt.desc}</p>
                   </div>
@@ -457,7 +457,7 @@ export function VoiceAgents() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1a1a22] hover:bg-[#20202b] text-teal-400 border border-teal-500/30 hover:border-teal-500 transition-colors shadow-sm"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path></svg>
-                <span>+ Add Tool</span>
+                <span>Add Tool</span>
               </button>
               
               {isToolMenuOpen && (
@@ -523,7 +523,7 @@ export function VoiceAgents() {
           <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
           <span>Changes autosaved to workspace</span>
         </div>
-        <button onClick={() => setIsConfigDrawerOpen(false)} type="button" className="px-4 py-2 rounded-lg text-xs font-medium bg-[#2563eb] hover:bg-blue-600 text-white transition-colors shadow-sm shadow-blue-500/20">
+        <button onClick={() => setIsConfigDrawerOpen(false)} type="button" className="px-4 py-2 rounded-lg text-xs font-medium bg-primary-container hover:bg-primary-container/90 text-on-primary-container transition-colors shadow-[0_0_12px_rgba(37,99,235,0.3)]">
           Done Configuring
         </button>
       </div>

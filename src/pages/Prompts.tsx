@@ -17,6 +17,8 @@ export function Prompts() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
+  const [promptToDelete, setPromptToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formTag, setFormTag] = useState("");
   const [formContent, setFormContent] = useState("");
@@ -30,16 +32,6 @@ export function Prompts() {
     fetchPrompts();
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault();
-        document.getElementById('input-prompt-search')?.focus();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
 
   const fetchPrompts = async () => {
     setLoading(true);
@@ -121,21 +113,27 @@ export function Prompts() {
     }
   };
 
-  const deletePrompt = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this prompt?")) {
-      try {
-        const { error } = await supabase
-          .from('prompts')
-          .delete()
-          .eq('id', id);
+  const confirmDeletePrompt = (id: string) => {
+    setPromptToDelete(id);
+  };
 
-        if (error) throw error;
-        setPrompts(prompts.filter(p => p.id !== id));
-      } catch (error) {
-        console.error('Error deleting prompt:', error);
-        alert('Failed to delete prompt.');
-      }
+  const executeDeletePrompt = async () => {
+    if (!promptToDelete) return;
+    setIsDeleting(true);
+    try {
+      const { error } = await supabase
+        .from('prompts')
+        .delete()
+        .eq('id', promptToDelete);
+
+      if (error) throw error;
+      setPrompts(prompts.filter(p => p.id !== promptToDelete));
+    } catch (error) {
+      console.error('Error deleting prompt:', error);
+      alert('Failed to delete prompt.');
     }
+    setIsDeleting(false);
+    setPromptToDelete(null);
   };
 
   const copyPromptText = (text: string, e: React.MouseEvent<HTMLButtonElement>) => {
@@ -159,7 +157,7 @@ export function Prompts() {
             <p className="text-sm text-neutral-400 mt-0.5">Manage behavioral guidelines, tone, and personas executed by Maya AI Voice.</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono text-on-surface-variant bg-surface-container border border-surface-container-high px-2.5 py-1 rounded">
+            <span className="inline-flex items-center justify-center px-3 py-2.5 rounded-lg text-xs font-mono text-on-surface-variant bg-surface-container border border-surface-container-high">
               {prompts.length} active prompt{prompts.length !== 1 ? 's' : ''}
             </span>
             <button 
@@ -179,12 +177,9 @@ export function Prompts() {
             type="text" 
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-surface-container border border-surface-container-high rounded-lg pl-9 pr-12 py-2 text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" 
+            className="w-full bg-surface-container border border-surface-container-high rounded-lg pl-9 pr-3 py-2 text-xs text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" 
             placeholder="Search prompts, personas, guidelines..." 
           />
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-            <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-on-surface-variant bg-surface-container-high border border-surface-container-highest rounded">⌘K</kbd>
-          </div>
         </div>
 
         <div className="space-y-3" id="prompts-list">
@@ -230,7 +225,7 @@ export function Prompts() {
                       </button>
                       <button 
                         className="p-1.5 rounded text-on-surface-variant hover:text-red-400 hover:bg-surface-container transition-colors" 
-                        onClick={() => deletePrompt(prompt.id)} 
+                        onClick={() => confirmDeletePrompt(prompt.id)} 
                         title="Delete prompt"
                       >
                         <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -321,7 +316,7 @@ export function Prompts() {
                 Cancel
               </button>
               <button 
-                className="px-4 py-2 bg-primary hover:bg-primary-container text-white text-xs font-semibold rounded shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50" 
+                className="px-4 py-2 bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-xs font-semibold rounded shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50" 
                 onClick={savePrompt} 
                 type="button"
                 disabled={saving}
@@ -332,6 +327,39 @@ export function Prompts() {
                   <span className="material-symbols-outlined text-[16px]">check</span>
                 )}
                 {saving ? 'Saving...' : 'Save Prompt'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {promptToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm pt-24">
+          <div className="bg-surface-container-low border border-surface-container-high rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in slide-in-from-top-10 duration-200 text-on-surface">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-error-container text-error flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-[28px]">warning</span>
+              </div>
+              <h2 className="text-xl font-bold text-on-surface mb-2">Delete Prompt?</h2>
+              <p className="text-sm text-on-surface-variant">
+                Are you sure you want to delete this prompt? This action cannot be undone.
+              </p>
+            </div>
+            
+            <div className="p-4 border-t border-surface-container-high bg-surface-container flex justify-end gap-3">
+              <button 
+                onClick={() => setPromptToDelete(null)}
+                className="px-4 py-2 rounded-lg hover:bg-surface-container-high text-on-surface text-sm font-medium transition-colors"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDeletePrompt}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-lg bg-error hover:bg-error/90 text-on-error text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>

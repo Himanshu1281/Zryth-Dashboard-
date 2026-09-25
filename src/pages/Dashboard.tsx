@@ -344,7 +344,7 @@ export function Dashboard() {
                         </svg>
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-white">{call.phone}</div>
+                        <div className="text-sm font-medium text-white">{call.phone || 'Unknown'}</div>
                         <div className="text-[11px] text-neutral-400 flex items-center gap-2 mt-0.5">
                           <span>{new Date(call.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                           <span className="w-1 h-1 rounded-full bg-neutral-600"></span>

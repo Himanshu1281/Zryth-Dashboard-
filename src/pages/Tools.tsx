@@ -17,6 +17,8 @@ export function Tools() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTool, setEditingTool] = useState<Tool | null>(null);
+  const [toolToDelete, setToolToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [formName, setFormName] = useState("");
   const [formJson, setFormJson] = useState("");
@@ -125,15 +127,21 @@ export function Tools() {
     setSaving(false);
   };
 
-  const deleteTool = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this tool?")) {
-      const { error } = await supabase.from('tools').delete().eq('id', id);
-      if (!error) {
-        setTools(tools.filter(t => t.id !== id));
-      } else {
-        alert("Error deleting tool: " + error.message);
-      }
+  const confirmDeleteTool = (id: string) => {
+    setToolToDelete(id);
+  };
+
+  const executeDeleteTool = async () => {
+    if (!toolToDelete) return;
+    setIsDeleting(true);
+    const { error } = await supabase.from('tools').delete().eq('id', toolToDelete);
+    if (!error) {
+      setTools(tools.filter(t => t.id !== toolToDelete));
+    } else {
+      alert("Error deleting tool: " + error.message);
     }
+    setIsDeleting(false);
+    setToolToDelete(null);
   };
 
   return (
@@ -146,7 +154,7 @@ export function Tools() {
             <p className="text-sm text-neutral-400 mt-0.5">Configure external function calling schemas, parameters, and execution triggers for Maya AI Voice.</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs font-mono text-on-surface-variant bg-surface-container border border-surface-container-high px-2.5 py-1 rounded">
+            <span className="inline-flex items-center justify-center px-3 py-2.5 rounded-lg text-xs font-mono text-on-surface-variant bg-surface-container border border-surface-container-high">
               {tools.length} active tool{tools.length !== 1 ? 's' : ''}
             </span>
             <button 
@@ -171,7 +179,11 @@ export function Tools() {
         </div>
 
         <div className="space-y-3" id="tools-list">
-          {filteredTools.map(tool => (
+          {filteredTools.map(tool => {
+            const snippetText = tool.execution_instruction || "JSON Function";
+            const snippet = snippetText.length > 70 ? snippetText.slice(0, 67) + '...' : snippetText;
+            
+            return (
             <div key={tool.id} className="bg-surface-container-low border border-surface-container-high rounded-lg shadow-sm transition-colors hover:border-surface-container-highest overflow-hidden">
               <details className="group">
                 <summary className="flex items-center justify-between p-4 cursor-pointer list-none select-none hover:bg-surface-container/30 transition-colors [&::-webkit-details-marker]:hidden">
@@ -179,9 +191,10 @@ export function Tools() {
                     <span className="px-2.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-primary font-mono text-xs font-medium shrink-0">
                       {tool.name}
                     </span>
-                    <span className="text-[10px] bg-primary/10 text-primary font-mono px-2 py-0.5 rounded border border-primary/20 shrink-0">Function</span>
-                    <span className="text-[10px] bg-tertiary-container/20 text-tertiary font-mono px-2 py-0.5 rounded border border-tertiary/20 shrink-0">v1.2 Active</span>
-                    <span className="text-xs text-on-surface-variant truncate hidden md:inline max-w-sm pl-2 border-l border-surface-container-high">Json Function</span>
+                    <span className="text-[10px] bg-tertiary-container/20 text-tertiary font-mono px-2 py-0.5 rounded border border-tertiary/20 shrink-0">Active</span>
+                    <span className="text-xs text-on-surface-variant truncate hidden md:inline max-w-sm pl-2 border-l border-surface-container-high">
+                      {snippet}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0 ml-4" onClick={e => e.stopPropagation()}>
                     <button 
@@ -205,7 +218,7 @@ export function Tools() {
                     </button>
                     <button 
                       className="p-1.5 rounded text-on-surface-variant hover:text-red-400 hover:bg-surface-container transition-colors" 
-                      onClick={() => deleteTool(tool.id)} 
+                      onClick={() => confirmDeleteTool(tool.id)} 
                       title="Delete tool"
                     >
                       <span className="material-symbols-outlined text-[18px]">delete</span>
@@ -234,7 +247,8 @@ export function Tools() {
                 </div>
               </details>
             </div>
-          ))}
+            );
+          })}
           
           {filteredTools.length === 0 && (
             <div className="text-center py-10 text-on-surface-variant text-sm">
@@ -304,13 +318,46 @@ export function Tools() {
                 Cancel
               </button>
               <button 
-                className="px-4 py-2 bg-primary hover:bg-primary-container text-white text-xs font-semibold rounded shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50" 
+                className="px-4 py-2 bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-xs font-semibold rounded shadow-md transition-all flex items-center gap-1.5 disabled:opacity-50" 
                 onClick={saveTool} 
                 type="button"
                 disabled={saving}
               >
                 <span className="material-symbols-outlined text-[16px]">check</span>
                 {saving ? 'Saving...' : 'Save Tool'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Confirmation Modal */}
+      {toolToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-start justify-center p-4 bg-black/60 backdrop-blur-sm pt-24">
+          <div className="bg-surface-container-low border border-surface-container-high rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden animate-in fade-in slide-in-from-top-10 duration-200 text-on-surface">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-error-container text-error flex items-center justify-center mb-4">
+                <span className="material-symbols-outlined text-[28px]">warning</span>
+              </div>
+              <h2 className="text-xl font-bold text-on-surface mb-2">Delete Tool?</h2>
+              <p className="text-sm text-on-surface-variant">
+                Are you sure you want to delete this tool? This action cannot be undone.
+              </p>
+            </div>
+            
+            <div className="p-4 border-t border-surface-container-high bg-surface-container flex justify-end gap-3">
+              <button 
+                onClick={() => setToolToDelete(null)}
+                className="px-4 py-2 rounded-lg hover:bg-surface-container-high text-on-surface text-sm font-medium transition-colors"
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={executeDeleteTool}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-lg bg-error hover:bg-error/90 text-on-error text-sm font-semibold transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
           </div>
