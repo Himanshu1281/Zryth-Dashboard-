@@ -12,6 +12,8 @@ import { CallTranscript } from './pages/CallTranscript';
 import { Settings } from './pages/Settings';
 import { VoiceAgents } from './pages/VoiceAgents';
 import { PhoneNumbers } from './pages/PhoneNumbers';
+import { Prompts } from './pages/Prompts';
+import { Tools } from './pages/Tools';
 
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -35,6 +37,8 @@ function App() {
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/agents" element={<ProtectedRoute><VoiceAgents /></ProtectedRoute>} />
             <Route path="/phone-numbers" element={<ProtectedRoute><PhoneNumbers /></ProtectedRoute>} />
+            <Route path="/prompts" element={<ProtectedRoute><Prompts /></ProtectedRoute>} />
+            <Route path="/tools" element={<ProtectedRoute><Tools /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/" replace />} />`n          </Routes>
         </BrowserRouter>
       </AuthProvider>
