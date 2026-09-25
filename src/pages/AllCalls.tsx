@@ -344,7 +344,7 @@ ${transcriptText}`;
           </div>
             <div className="flex items-center gap-2.5 self-start sm:self-auto">
               <button onClick={() => fetchCalls()} className="w-9 h-9 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface-variant flex items-center justify-center transition-colors border border-surface-container-highest" title="Refresh">
-                <span className={`material-symbols-outlined text-[19px] transition-transform duration-500 hover:rotate-180 ${loading ? 'animate-spin' : ''}`}>refresh</span>
+                <span className={`material-symbols-outlined text-[19px] inline-block transition-transform duration-500 hover:rotate-180 ${loading ? 'animate-spin' : ''}`}>refresh</span>
               </button>
               <button onClick={handleDownloadExcel} className="flex items-center gap-2 px-3.5 h-9 rounded-lg border border-surface-container-highest bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-xs font-semibold tracking-wide transition-colors shadow-sm">
                 <span className="material-symbols-outlined text-[17px] text-outline">download</span>

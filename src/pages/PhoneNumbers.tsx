@@ -214,7 +214,7 @@ export function PhoneNumbers() {
             <p className="text-sm text-neutral-400 mt-0.5">{totalNumbers} numbers on your account</p>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-container text-white text-xs font-semibold transition shadow-lg active:scale-95">
+            <button onClick={() => setShowModal(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-xs font-semibold transition shadow-[0_0_16px_rgba(37,99,235,0.35)] active:scale-95">
               <span className="material-symbols-outlined text-[16px]">add</span>
               <span>Buy Number</span>
             </button>
@@ -297,7 +297,7 @@ export function PhoneNumbers() {
                 </button>
               </div>
               <button onClick={fetchVobizNumbers} type="button" title="Refresh" className={`p-1.5 rounded-lg transition ${loading ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'}`}>
-                <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>refresh</span>
+                <span className={`material-symbols-outlined text-[18px] inline-block ${loading ? 'animate-spin' : ''}`}>refresh</span>
               </button>
             </div>
           </div>
@@ -314,17 +314,8 @@ export function PhoneNumbers() {
                   <th className="py-3 px-4">Renewal</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-surface-container-high">
-                {loading ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-on-surface-variant text-sm">
-                      <div className="flex items-center justify-center gap-2">
-                        <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div>
-                        Fetching Vobiz numbers...
-                      </div>
-                    </td>
-                  </tr>
-                ) : vobizNumbers.length > 0 ? (
+              <tbody className={`divide-y divide-surface-container-high transition-opacity ${loading ? 'opacity-50' : ''}`}>
+                {vobizNumbers.length > 0 ? (
                   vobizNumbers
                     .filter((numberObj) => {
                       if (activeTab === 'active') return numberObj.status === 'active';
@@ -383,6 +374,15 @@ export function PhoneNumbers() {
                       </td>
                     </tr>
                   ))
+                ) : loading ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-on-surface-variant text-sm">
+                      <div className="flex items-center justify-center gap-2">
+                        <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                        Fetching Vobiz numbers...
+                      </div>
+                    </td>
+                  </tr>
                 ) : (
                   <tr>
                     <td colSpan={6} className="py-12 text-center">

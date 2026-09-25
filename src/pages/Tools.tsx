@@ -151,7 +151,7 @@ export function Tools() {
             </span>
             <button 
               onClick={openAddModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary hover:bg-primary-container text-white text-xs font-semibold transition shadow-lg active:scale-95" 
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-xs font-semibold transition shadow-[0_0_16px_rgba(37,99,235,0.35)] active:scale-95" 
             >
               <span className="material-symbols-outlined text-[16px]">add</span>
               <span>Add Tool</span>

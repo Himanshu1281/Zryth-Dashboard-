@@ -326,7 +326,7 @@ export function VoiceAgents() {
 <div className="mt-4 pt-3 border-t border-[#1a1a22] flex items-center justify-between gap-3">
   <button 
     onClick={() => setIsConfigDrawerOpen(true)}
-    className="flex-1 bg-[#15151b] hover:bg-[#1a1a22] text-zinc-300 hover:text-white py-1.5 px-3 rounded-lg text-xs font-medium border border-[#23232c] transition-colors inline-flex items-center justify-center gap-1.5" 
+    className="flex-1 bg-primary-container hover:bg-primary-container/90 text-on-primary-container py-1.5 px-3 rounded-lg text-xs font-medium border border-transparent shadow-[0_0_16px_rgba(37,99,235,0.35)] transition-colors inline-flex items-center justify-center gap-1.5" 
     type="button"
   >
     <svg className="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
