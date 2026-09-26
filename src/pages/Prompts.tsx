@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../layouts/Layout';
 import { supabase } from '../config/supabase';
+import toast from 'react-hot-toast';
 
 interface Prompt {
   id: string;
@@ -22,6 +23,7 @@ export function Prompts() {
 
   const [formTag, setFormTag] = useState("");
   const [formContent, setFormContent] = useState("");
+  const [formErrors, setFormErrors] = useState<{tag?: string, content?: string}>({});
 
   const filteredPrompts = prompts.filter(prompt => 
     prompt.tag.toLowerCase().includes(search.toLowerCase()) || 
@@ -45,7 +47,7 @@ export function Prompts() {
       if (data) setPrompts(data as Prompt[]);
     } catch (error) {
       console.error('Error fetching prompts:', error);
-      alert('Failed to load prompts.');
+      toast.error('Failed to load prompts.');
     } finally {
       setLoading(false);
     }
@@ -55,6 +57,7 @@ export function Prompts() {
     setEditingPrompt(null);
     setFormTag("greeting_prompt");
     setFormContent("");
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -62,6 +65,7 @@ export function Prompts() {
     setEditingPrompt(prompt);
     setFormTag(prompt.tag);
     setFormContent(prompt.content);
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -71,14 +75,20 @@ export function Prompts() {
   };
 
   const savePrompt = async () => {
+    const errors: {tag?: string, content?: string} = {};
     if (!formTag.trim()) {
-      alert("Please provide a prompt identifier.");
-      return;
+      errors.tag = "Prompt identifier is required.";
     }
     if (!formContent.trim()) {
-      alert("Please provide prompt content.");
+      errors.content = "Prompt content cannot be empty.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
+    
+    setFormErrors({});
 
     setSaving(true);
     try {
@@ -96,7 +106,7 @@ export function Prompts() {
 
         if (error) {
           if (error.code === '23505') {
-            alert('A prompt with this tag already exists.');
+            toast.error('A prompt with this tag already exists.');
             return;
           }
           throw error;
@@ -104,10 +114,11 @@ export function Prompts() {
       }
 
       await fetchPrompts();
+      toast.success("Prompt saved successfully.");
       closeModal();
     } catch (error) {
       console.error('Error saving prompt:', error);
-      alert('Failed to save prompt.');
+      toast.error('Failed to save prompt.');
     } finally {
       setSaving(false);
     }
@@ -128,9 +139,10 @@ export function Prompts() {
 
       if (error) throw error;
       setPrompts(prompts.filter(p => p.id !== promptToDelete));
+      toast.success("Prompt deleted successfully.");
     } catch (error) {
       console.error('Error deleting prompt:', error);
-      alert('Failed to delete prompt.');
+      toast.error('Failed to delete prompt.');
     }
     setIsDeleting(false);
     setPromptToDelete(null);
@@ -285,24 +297,26 @@ export function Prompts() {
                 <select 
                   id="input-prompt-name" 
                   value={formTag}
-                  onChange={e => setFormTag(e.target.value)}
+                  onChange={e => { setFormTag(e.target.value); if(formErrors.tag) setFormErrors({...formErrors, tag: undefined}); }}
                   disabled={saving}
-                  className="w-full px-3 py-2 bg-surface-container border border-surface-container-high rounded text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition font-mono disabled:opacity-50"
+                  className={`w-full px-3 py-2 bg-surface-container border ${formErrors.tag ? 'border-error' : 'border-surface-container-high'} rounded text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition font-mono disabled:opacity-50`}
                 >
                   <option value="greeting_prompt">greeting_prompt</option>
                 </select>
+                {formErrors.tag && <p className="text-[10px] text-error mt-1">{formErrors.tag}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-on-surface-variant uppercase tracking-wider" htmlFor="input-prompt-content">Prompt Content</label>
                 <textarea 
                   id="input-prompt-content" 
                   value={formContent}
-                  onChange={e => setFormContent(e.target.value)}
+                  onChange={e => { setFormContent(e.target.value); if(formErrors.content) setFormErrors({...formErrors, content: undefined}); }}
                   disabled={saving}
-                  className="w-full bg-surface-container border border-surface-container-high rounded text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition p-3 resize-y leading-relaxed disabled:opacity-50" 
+                  className={`w-full bg-surface-container border ${formErrors.content ? 'border-error' : 'border-surface-container-high'} rounded text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition p-3 resize-y leading-relaxed disabled:opacity-50`}
                   placeholder="Enter system prompt guidelines..." 
                   rows={5}
                 ></textarea>
+                {formErrors.content && <p className="text-[10px] text-error mt-1">{formErrors.content}</p>}
               </div>
             </div>
             

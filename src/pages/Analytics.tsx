@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useCallsWithMessages } from '../hooks/useCalls';
 import { Layout } from '../layouts/Layout';
+import toast from 'react-hot-toast';
 import { supabase } from '../config/supabase';
 import * as XLSX from 'xlsx';
 
@@ -157,7 +158,7 @@ export function Analytics() {
 
   const handleDownloadReport = () => {
     if (calls.length === 0) {
-      alert("No data available to download.");
+      toast.error("No data available to download.");
       return;
     }
 
@@ -185,6 +186,7 @@ export function Analytics() {
 
     const dateStr = new Date().toISOString().split('T')[0];
     XLSX.writeFile(workbook, `Analytics_Report_${dateStr}.xlsx`);
+    toast.success("Report downloaded successfully.");
   };
 
   return (

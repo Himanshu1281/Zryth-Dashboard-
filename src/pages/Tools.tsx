@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../layouts/Layout';
 import { supabase } from '../config/supabase';
+import toast from 'react-hot-toast';
 
 interface Tool {
   id: string;
@@ -23,6 +24,7 @@ export function Tools() {
   const [formName, setFormName] = useState("");
   const [formJson, setFormJson] = useState("");
   const [formInstruction, setFormInstruction] = useState("");
+  const [formErrors, setFormErrors] = useState<{name?: string, json?: string}>({});
 
   const filteredTools = tools.filter(tool => 
     tool.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -56,6 +58,7 @@ export function Tools() {
     setFormName("");
     setFormJson(`{\n  "type": "function",\n  "function": {\n    "name": "new_tool",\n    "description": "Description of tool",\n    "parameters": {\n      "type": "object",\n      "properties": {}\n    }\n  }\n}`);
     setFormInstruction("");
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -64,6 +67,7 @@ export function Tools() {
     setFormName(tool.name);
     setFormJson(tool.json_spec);
     setFormInstruction(tool.execution_instruction);
+    setFormErrors({});
     setIsModalOpen(true);
   };
 
@@ -72,18 +76,24 @@ export function Tools() {
   };
 
   const saveTool = async () => {
+    const errors: {name?: string, json?: string} = {};
     if (!formName.trim()) {
-      alert("Please provide a tool name.");
-      return;
+      errors.name = "Tool name is required to save.";
     }
     
     let parsedJson;
     try {
       parsedJson = JSON.parse(formJson);
     } catch (e) {
-      alert("Invalid JSON format in specification.");
+      errors.json = "Ensure your JSON specification is formatted correctly. Valid JSON is required.";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
+    
+    setFormErrors({});
 
     setSaving(true);
 
@@ -101,9 +111,10 @@ export function Tools() {
           json_spec: JSON.stringify(parsedJson, null, 2),
           execution_instruction: formInstruction
         } : t));
+        toast.success("Tool saved successfully.");
         closeModal();
       } else {
-        alert("Error saving tool: " + error.message);
+        toast.error("Failed to save tool: " + error.message);
       }
     } else {
       const { data, error } = await supabase.from('tools').insert({
@@ -119,9 +130,10 @@ export function Tools() {
           json_spec: JSON.stringify(data.json_spec, null, 2),
           execution_instruction: data.execution_instruction || ""
         }, ...tools]);
+        toast.success("Tool created successfully.");
         closeModal();
       } else if (error) {
-        alert("Error creating tool: " + error.message);
+        toast.error("Failed to create tool: " + error.message);
       }
     }
     setSaving(false);
@@ -137,8 +149,9 @@ export function Tools() {
     const { error } = await supabase.from('tools').delete().eq('id', toolToDelete);
     if (!error) {
       setTools(tools.filter(t => t.id !== toolToDelete));
+      toast.success("Tool deleted successfully.");
     } else {
-      alert("Error deleting tool: " + error.message);
+      toast.error("Failed to delete tool: " + error.message);
     }
     setIsDeleting(false);
     setToolToDelete(null);
@@ -179,7 +192,11 @@ export function Tools() {
         </div>
 
         <div className="space-y-3" id="tools-list">
-          {filteredTools.map(tool => {
+          {loading ? (
+            <div className="flex justify-center items-center py-10">
+              <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
+            </div>
+          ) : filteredTools.map(tool => {
             const snippetText = tool.execution_instruction || "JSON Function";
             const snippet = snippetText.length > 70 ? snippetText.slice(0, 67) + '...' : snippetText;
             
@@ -250,7 +267,7 @@ export function Tools() {
             );
           })}
           
-          {filteredTools.length === 0 && (
+          {!loading && filteredTools.length === 0 && (
             <div className="text-center py-10 text-on-surface-variant text-sm">
               No tools found matching your search.
             </div>
@@ -280,21 +297,23 @@ export function Tools() {
                   id="input-tool-name" 
                   type="text" 
                   value={formName}
-                  onChange={e => setFormName(e.target.value)}
-                  className="w-full px-3 py-2 bg-surface-container border border-surface-container-high rounded text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition font-mono" 
+                  onChange={e => { setFormName(e.target.value); if(formErrors.name) setFormErrors({...formErrors, name: undefined}); }}
+                  className={`w-full px-3 py-2 bg-surface-container border ${formErrors.name ? 'border-error' : 'border-surface-container-high'} rounded text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition font-mono`}
                   placeholder="e.g. check_calendar_availability" 
                 />
+                {formErrors.name && <p className="text-[10px] text-error mt-1">{formErrors.name}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-on-surface-variant uppercase tracking-wider" htmlFor="input-tool-json">JSON Specification</label>
                 <textarea 
                   id="input-tool-json" 
                   value={formJson}
-                  onChange={e => setFormJson(e.target.value)}
-                  className="w-full bg-surface-container border border-surface-container-high rounded text-xs font-mono text-primary placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition p-3 resize-y leading-relaxed" 
+                  onChange={e => { setFormJson(e.target.value); if(formErrors.json) setFormErrors({...formErrors, json: undefined}); }}
+                  className={`w-full bg-surface-container border ${formErrors.json ? 'border-error' : 'border-surface-container-high'} rounded text-xs font-mono text-primary placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition p-3 resize-y leading-relaxed`}
                   placeholder="{\n  &quot;type&quot;: &quot;function&quot;,\n  &quot;function&quot;: { ... }\n}" 
                   rows={7}
                 ></textarea>
+                {formErrors.json && <p className="text-[10px] text-error mt-1">{formErrors.json}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className="block text-xs font-medium text-on-surface-variant uppercase tracking-wider" htmlFor="input-tool-instruction">Execution Instruction</label>

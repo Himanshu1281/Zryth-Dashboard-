@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from '../layouts/Layout';
+import toast from 'react-hot-toast';
 import { supabase } from '../config/supabase';
 
 export function KnowledgeBase() {
@@ -42,12 +43,12 @@ export function KnowledgeBase() {
     if (!file) return;
 
     if (file.type !== 'application/pdf') {
-      alert('Only PDF files are supported.');
+      toast.error('Only PDF files are supported.');
       return;
     }
 
     if (file.size > 50 * 1024 * 1024) {
-      alert('File size exceeds 50MB limit.');
+      toast.error('File size exceeds 50MB limit.');
       return;
     }
 
@@ -67,9 +68,10 @@ export function KnowledgeBase() {
       }
 
       await fetchFiles();
+      toast.success('Document uploaded successfully.');
     } catch (error: any) {
       console.error('Error uploading file:', error);
-      alert(error.message || 'Error uploading file.');
+      toast.error(error.message || 'Error uploading file.');
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -98,9 +100,10 @@ export function KnowledgeBase() {
       await fetchFiles();
       setShowDeleteModal(false);
       setDocumentToDelete(null);
+      toast.success('Document deleted successfully.');
     } catch (error: any) {
       console.error('Error deleting file:', error);
-      alert(error.message || 'Error deleting file.');
+      toast.error(error.message || 'Error deleting file.');
     } finally {
       setIsDeleting(false);
     }

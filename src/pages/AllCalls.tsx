@@ -7,6 +7,7 @@ import { Drawer } from '../components/ui/Drawer';
 import { supabase } from '../config/supabase';
 import type { CallData, MessageData } from '../types';
 import * as XLSX from 'xlsx';
+import toast from 'react-hot-toast';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -185,7 +186,7 @@ ${transcriptText}`;
 
   const handleDownloadExcel = () => {
     if (filteredCalls.length === 0) {
-      alert("No records to download");
+      toast.error("No records to download");
       return;
     }
 
@@ -205,6 +206,7 @@ ${transcriptText}`;
 
     const dateStr = new Date().toISOString().split('T')[0];
     XLSX.writeFile(workbook, `Call_Records_${dateStr}.xlsx`);
+    toast.success("Call records downloaded successfully.");
   };
 
   const formatDuration = (seconds: number | null | undefined) => {

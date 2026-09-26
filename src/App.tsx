@@ -17,11 +17,22 @@ import { Tools } from './pages/Tools';
 
 import { ProtectedRoute } from './components/ProtectedRoute';
 
+import { Toaster } from 'react-hot-toast';
+
 const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="top-right" toastOptions={{
+        style: {
+          background: '#1a1a22',
+          color: '#fff',
+          border: '1px solid #2b2b36',
+          fontSize: '14px',
+          borderRadius: '8px'
+        },
+      }} />
       <AuthProvider>
         <BrowserRouter>
           <Routes>

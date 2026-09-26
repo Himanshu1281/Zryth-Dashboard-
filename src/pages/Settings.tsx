@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout } from '../layouts/Layout';
+import toast from 'react-hot-toast';
 import { supabase } from '../config/supabase';
 import { useAuth } from '../context/AuthContext';
 
@@ -81,7 +82,7 @@ export function Settings() {
     if (deleteConfirmation !== 'DELETE') return;
     
     if (!currentUser) {
-      alert("No active session found.");
+      toast.error("No active session found.");
       return;
     }
     
@@ -103,7 +104,7 @@ export function Settings() {
       navigate('/login');
     } catch (err: any) {
       console.error("Error deleting account:", err);
-      alert(err.message || "Failed to delete account. Please try again.");
+      toast.error(err.message || "Failed to delete account. Please try again.");
     } finally {
       setIsDeleting(false);
     }
@@ -129,7 +130,7 @@ export function Settings() {
     if (!file) return;
     
     if (file.size > 2 * 1024 * 1024) {
-      alert('File size must be less than 2MB');
+      toast.error('File size must be less than 2MB');
       return;
     }
 

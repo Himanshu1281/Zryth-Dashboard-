@@ -1,4 +1,5 @@
 import { Layout } from '../layouts/Layout';
+import toast from 'react-hot-toast';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../config/supabase';
 import { useCallsWithMessages } from '../hooks/useCalls';
@@ -79,9 +80,10 @@ export function VoiceAgents() {
     });
     if (error) {
       console.error('Insert error:', error);
-      alert('Error attaching prompt: ' + error.message);
+      toast.error('Error attaching prompt: ' + error.message);
     } else {
       setAssignedPrompts([...assignedPrompts, prompt]);
+      toast.success(`Prompt "${prompt.name}" attached successfully.`);
     }
     setIsPromptMenuOpen(false);
   };
@@ -92,9 +94,10 @@ export function VoiceAgents() {
       .eq('prompt_tag', prompt.name);
     if (error) {
       console.error('Delete error:', error);
-      alert('Error detaching prompt: ' + error.message);
+      toast.error('Error detaching prompt: ' + error.message);
     } else {
       setAssignedPrompts(assignedPrompts.filter(p => p.name !== prompt.name));
+      toast.success(`Prompt "${prompt.name}" detached.`);
     }
   };
 
@@ -109,9 +112,10 @@ export function VoiceAgents() {
     });
     if (error) {
       console.error('Insert error:', error);
-      alert('Error attaching tool: ' + error.message);
+      toast.error('Error attaching tool: ' + error.message);
     } else {
       setAssignedTools([...assignedTools, tool]);
+      toast.success(`Tool "${tool.name}" attached successfully.`);
     }
     setIsToolMenuOpen(false);
   };
@@ -122,9 +126,10 @@ export function VoiceAgents() {
       .eq('tool_name', tool.name);
     if (error) {
       console.error('Delete error:', error);
-      alert('Error detaching tool: ' + error.message);
+      toast.error('Error detaching tool: ' + error.message);
     } else {
       setAssignedTools(assignedTools.filter(t => t.name !== tool.name));
+      toast.success(`Tool "${tool.name}" detached.`);
     }
   };
 
