@@ -22,10 +22,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         {/* Brand Content Overlay */}
         <div className="relative z-10 flex flex-col items-start justify-center h-full px-16 max-w-lg">
           <div className="flex items-center gap-3 mb-stack-lg">
-            <div className="h-10 w-10 bg-primary-container rounded-lg flex items-center justify-center shadow-[0_0_24px_rgba(37,99,235,0.15)]">
-              <span className="material-symbols-outlined text-on-primary-container" style={{ fontVariationSettings: "'FILL' 1" }}>graphic_eq</span>
-            </div>
-            <span className="font-headline-lg text-3xl font-semibold text-on-surface tracking-tight">Maya AI</span>
+            <img src="/icon.png" alt="Zryth" className="h-10 w-10 rounded-lg shadow-[0_0_24px_rgba(37,99,235,0.15)]" />
+            <span className="font-headline-lg text-3xl font-bold text-on-surface tracking-wide uppercase">Zryth</span>
           </div>
           <h1 className="font-display-lg text-5xl font-bold text-on-surface mb-stack-md leading-tight tracking-tight">
             Intelligence in every conversation.
@@ -50,10 +48,8 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         <div className="w-full max-w-md px-8 sm:px-12 py-4 relative z-10 flex flex-col justify-center h-full">
           {/* Mobile Brand Header */}
           <div className="lg:hidden flex items-center gap-3 mb-6 justify-center">
-            <div className="h-8 w-8 bg-primary-container rounded-md flex items-center justify-center shadow-[0_0_24px_rgba(37,99,235,0.15)]">
-              <span className="material-symbols-outlined text-on-primary-container text-sm" style={{ fontVariationSettings: "'FILL' 1" }}>graphic_eq</span>
-            </div>
-            <span className="font-headline-md text-2xl font-semibold text-on-surface">Maya AI</span>
+            <img src="/icon.png" alt="Zryth" className="h-8 w-8 rounded-md shadow-[0_0_24px_rgba(37,99,235,0.15)]" />
+            <span className="font-headline-md text-2xl font-bold text-on-surface uppercase tracking-wide">Zryth</span>
           </div>
           
           {children}

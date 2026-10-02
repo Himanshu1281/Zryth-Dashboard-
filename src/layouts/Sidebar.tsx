@@ -23,15 +23,13 @@ export function Sidebar() {
       <div className="flex flex-col overflow-hidden flex-1">
         {/* Zryth Application Brand Header */}
         <div className="px-5 py-5 border-b border-[#27272a] flex items-center gap-3 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-600/30">
-            Z
-          </div>
+          <img src="/icon.png" alt="Zryth" className="h-8 w-auto rounded shadow-lg shadow-blue-600/30 object-contain" />
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold tracking-wider text-sm text-white uppercase">Zryth</span>
+            <div className="flex items-center gap-2 h-8">
+              <span className="font-bold tracking-wider text-lg text-white uppercase">Zryth</span>
               <span className="text-[10px] bg-zinc-800 text-zinc-400 font-mono px-1.5 py-0.5 rounded border border-zinc-700">v2.4</span>
             </div>
-            <span className="text-[11px] text-zinc-400 font-medium tracking-wide uppercase">Maya AI Voice</span>
+            <span className="text-[11px] text-zinc-400 font-medium tracking-wide uppercase">Voice Intelligence</span>
           </div>
         </div>
 
