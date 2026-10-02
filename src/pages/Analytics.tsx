@@ -1,5 +1,4 @@
 import { useCallsWithMessages } from '../hooks/useCalls';
-import { Layout } from '../layouts/Layout';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 
@@ -188,7 +187,7 @@ export function Analytics() {
   };
 
   return (
-    <Layout disablePadding={true} title="Analytics - Zryth AI Voice">
+    <>
       <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
         {/* Header Title Section */}
         <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
@@ -448,6 +447,6 @@ export function Analytics() {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 }

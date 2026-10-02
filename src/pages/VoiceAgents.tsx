@@ -1,4 +1,3 @@
-import { Layout } from '../layouts/Layout';
 import toast from 'react-hot-toast';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { api } from '../api';
@@ -199,7 +198,7 @@ export function VoiceAgents() {
 
 
   return (
-    <Layout disablePadding={true} title="Voice Agents - Maya AI Voice">
+    <>
       <div className="flex-1 overflow-y-auto px-8 py-8 flex flex-col justify-start">
         {/* Page Title & Primary Subheading Area */}
         
@@ -482,6 +481,6 @@ export function VoiceAgents() {
 )}
 
       </div>
-    </Layout>
+    </>
   );
 }

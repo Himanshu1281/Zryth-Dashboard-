@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Layout } from '../layouts/Layout';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Drawer } from '../components/ui/Drawer';
 import { api } from '../api';
@@ -265,7 +264,7 @@ export function AllCalls() {
   }
 
   return (
-    <Layout disablePadding={true} title="Call History">
+    <>
       <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
           {/* Page Header (Title, Subtitle & Action Bar) */}
           <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
@@ -638,6 +637,6 @@ export function AllCalls() {
           </div>
         </Drawer>
 
-    </Layout>
+    </>
   );
 }

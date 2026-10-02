@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Layout } from '../layouts/Layout';
 import { api } from '../api';
 import toast from 'react-hot-toast';
 
@@ -136,7 +135,7 @@ export function Prompts() {
   };
 
   return (
-    <Layout title="Prompts" disablePadding>
+    <>
       <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
         
         <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
@@ -355,6 +354,6 @@ export function Prompts() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

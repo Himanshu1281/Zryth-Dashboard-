@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Layout } from '../layouts/Layout';
 import toast from 'react-hot-toast';
 import { api } from '../api';
 
@@ -136,7 +135,7 @@ export function KnowledgeBase() {
   };
 
   return (
-    <Layout disablePadding={true} title="Knowledge Base - Zryth AI Voice">
+    <>
       <div 
         className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full min-h-full"
         style={{ background: 'radial-gradient(circle at center, rgba(37,99,235,0.05) 0%, transparent 70%)' }}
@@ -298,6 +297,6 @@ export function KnowledgeBase() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

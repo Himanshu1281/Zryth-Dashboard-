@@ -1,4 +1,3 @@
-import { Layout } from '../layouts/Layout';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../api';
@@ -48,7 +47,7 @@ export function CallTranscript() {
   const statusStr = call?.status || (call?.ended_at ? 'Completed' : 'Failed');
 
   return (
-    <Layout title="Call Transcript" disablePadding={true}>
+    <>
       <div className="w-full max-w-[1440px] mx-auto pb-16 px-6 lg:px-10">
         
         <div className="sticky top-0 z-30 flex flex-col gap-3 pt-6 lg:pt-10 pb-3 -mx-6 lg:-mx-10 px-6 lg:px-10 bg-surface border-b border-surface-container-high mb-6">
@@ -188,6 +187,6 @@ export function CallTranscript() {
           </div>
         )}
       </div>
-    </Layout>
+    </>
   );
 }

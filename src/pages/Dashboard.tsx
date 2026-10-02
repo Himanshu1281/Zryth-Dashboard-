@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useCallsWithMessages } from '../hooks/useCalls';
 import { Link } from 'react-router-dom';
-import { Layout } from '../layouts/Layout';
 import { useMetrics } from '../hooks/useMetrics';
 
 export function Dashboard() {
@@ -131,7 +130,7 @@ export function Dashboard() {
   };
 
   return (
-    <Layout disablePadding={true} title="Dashboard - Zryth AI Voice">
+    <>
       <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
         {/* BEGIN: Page Header */}
         <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
@@ -344,7 +343,7 @@ export function Dashboard() {
         </section>
         {/* END: Charts & Activity Row */}
       </div>
-    </Layout>
+    </>
   );
 }
 

@@ -1,4 +1,3 @@
-import { Layout } from '../layouts/Layout';
 import { useState, useEffect } from 'react';
 import { api } from '../api';
 
@@ -147,7 +146,7 @@ export function PhoneNumbers() {
 
 
   return (
-    <Layout disablePadding={true} title="Phone Numbers">
+    <>
       <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
         <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
           <div>
@@ -446,6 +445,6 @@ export function PhoneNumbers() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

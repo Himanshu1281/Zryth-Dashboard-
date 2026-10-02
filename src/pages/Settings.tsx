@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Layout } from '../layouts/Layout';
 import toast from 'react-hot-toast';
 import { supabase } from '../config/supabase';
 import { api } from '../api';
@@ -156,7 +155,7 @@ export function Settings() {
   };
 
   return (
-    <Layout disablePadding={true} title="Settings">
+    <>
       <div className="p-4 sm:p-8 space-y-6 max-w-[1440px] mx-auto w-full">
         {/* Top Action / Breadcrumb Bar Synchronizer */}
         <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4" data-purpose="page-header">
@@ -478,6 +477,6 @@ export function Settings() {
           </div>
         </div>
       )}
-    </Layout>
+    </>
   );
 }

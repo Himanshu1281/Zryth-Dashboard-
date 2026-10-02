@@ -1,20 +1,25 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
 
-interface HeaderProps {
-  title: string;
-}
-
-export function Header({ title }: HeaderProps) {
+export function Header() {
   const { currentUser } = useAuth();
+  const location = useLocation();
   const [initials, setInitials] = useState('U');
   const [fullName, setFullName] = useState('User');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  // Extract the page name from the title, e.g., "Analytics - Zryth AI Voice" -> "Analytics"
-  const pageName = title.split(' - ')[0];
+  // Map pathnames to readable titles
+  let pageName = 'Dashboard';
+  if (location.pathname.startsWith('/analytics')) pageName = 'Analytics';
+  else if (location.pathname.startsWith('/calls')) pageName = 'Call History';
+  else if (location.pathname.startsWith('/knowledge')) pageName = 'Knowledge Base';
+  else if (location.pathname.startsWith('/settings')) pageName = 'Settings';
+  else if (location.pathname.startsWith('/agents')) pageName = 'Voice Agents';
+  else if (location.pathname.startsWith('/phone-numbers')) pageName = 'Phone Numbers';
+  else if (location.pathname.startsWith('/prompts')) pageName = 'Prompts';
+  else if (location.pathname.startsWith('/tools')) pageName = 'Tools';
 
   useEffect(() => {
     const fetchProfile = () => {
