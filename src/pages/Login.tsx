@@ -34,7 +34,7 @@ export function Login() {
   };
 
   return (
-    <AuthLayout>
+    <>
       <div className="mb-stack-lg mb-8">
         <h2 className="font-headline-lg text-3xl lg:text-3xl font-semibold text-on-surface mb-2">Welcome back</h2>
         <p className="font-body-sm text-sm text-on-surface-variant">Sign in to your enterprise dashboard.</p>
@@ -136,7 +136,7 @@ export function Login() {
         <a className="font-label-md text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant hover:text-on-surface transition-colors" href="#">Privacy Policy</a>
         <a className="font-label-md text-[11px] font-semibold uppercase tracking-wider text-on-surface-variant hover:text-on-surface transition-colors" href="#">Terms of Service</a>
       </div>
-    </AuthLayout>
+    </>
   );
 }
 

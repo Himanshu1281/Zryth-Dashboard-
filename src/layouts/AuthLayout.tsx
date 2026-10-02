@@ -1,7 +1,8 @@
 import React from 'react';
+import { Outlet } from 'react-router-dom';
 
 interface AuthLayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function AuthLayout({ children }: AuthLayoutProps) {
@@ -52,7 +53,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             <span className="font-headline-md text-2xl font-bold text-on-surface uppercase tracking-wide">Zryth</span>
           </div>
           
-          {children}
+          {children || <Outlet />}
         </div>
       </div>
     </div>

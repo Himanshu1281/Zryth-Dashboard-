@@ -51,7 +51,7 @@ export function SignUp() {
   };
 
   return (
-    <AuthLayout>
+    <>
       {/* Card Title & Subtitle */}
       <header className="mb-5">
         <h2 className="font-headline-lg text-3xl font-bold tracking-tight text-on-surface">Create your account</h2>
@@ -204,6 +204,6 @@ export function SignUp() {
         and{' '}
         <a className="hover:text-on-surface underline underline-offset-2 transition-colors" href="#">Privacy Policy</a>.
       </footer>
-    </AuthLayout>
+    </>
   );
 }
