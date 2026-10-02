@@ -11,7 +11,7 @@ export interface CallData {
   agent_id: string;
   status?: string;
   estimated_duration?: number | null;
-  messages?: { id: string; created_at: string }[];
+  message_count?: number;
 }
 
 export interface MessageData {

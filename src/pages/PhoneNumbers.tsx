@@ -1,6 +1,6 @@
 import { Layout } from '../layouts/Layout';
 import { useState, useEffect } from 'react';
-import { supabase } from '../config/supabase';
+import { api } from '../api';
 
 export function PhoneNumbers() {
   const [showModal, setShowModal] = useState(false);
@@ -18,52 +18,23 @@ export function PhoneNumbers() {
   const fetchInventoryNumbers = async (page: number = 1, searchParam: string = '') => {
     setInventoryLoading(true);
     try {
-      const authId = import.meta.env.VITE_VOBIZ_AUTH_ID;
-      const authToken = import.meta.env.VITE_VOBIZ_AUTH_TOKEN;
+      const data = await api.phoneNumbers.inventory(page, searchParam);
+      if (data.total && data.per_page) {
+        setInventoryTotalPages(Math.ceil(data.total / data.per_page));
+      }
+
+      let numbersArray: any[] = [];
+      if (data && data.data && Array.isArray(data.data)) {
+        numbersArray = data.data;
+      } else if (data && data.objects && Array.isArray(data.objects)) {
+        numbersArray = data.objects;
+      } else if (data && data.items && Array.isArray(data.items)) {
+        numbersArray = data.items;
+      } else if (Array.isArray(data)) {
+        numbersArray = data;
+      }
       
-      let url = `https://api.vobiz.ai/api/v1/Account/${authId}/inventory/numbers?per_page=50&page=${page}`;
-      if (searchParam) {
-        url += `&search=${encodeURIComponent(searchParam)}`;
-      }
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "X-Auth-ID": authId,
-          "X-Auth-Token": authToken,
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
-      });
-
-      const raw = await response.text();
-      if (!response.ok) {
-        console.error(`Vobiz API Error (${response.status}):`, raw);
-        return;
-      }
-
-      try {
-        const data = JSON.parse(raw);
-        
-        if (data.total && data.per_page) {
-          setInventoryTotalPages(Math.ceil(data.total / data.per_page));
-        }
-
-        let numbersArray: any[] = [];
-        if (data && data.data && Array.isArray(data.data)) {
-          numbersArray = data.data;
-        } else if (data && data.objects && Array.isArray(data.objects)) {
-          numbersArray = data.objects;
-        } else if (data && data.items && Array.isArray(data.items)) {
-          numbersArray = data.items;
-        } else if (Array.isArray(data)) {
-          numbersArray = data;
-        }
-        
-        setInventoryNumbers(numbersArray);
-      } catch (e) {
-        console.error("Vobiz returned non-JSON:", raw);
-      }
+      setInventoryNumbers(numbersArray);
     } catch (err) {
       console.error("Failed to fetch Vobiz inventory numbers:", err);
     } finally {
@@ -85,26 +56,21 @@ export function PhoneNumbers() {
     }
   }, [showModal, debouncedSearchQuery]);
 
-  // Fetch agent-to-phone mapping from Supabase calls table
+  // Fetch which agent answers each of the account's numbers
   const fetchAgentPhoneMapping = async () => {
     try {
-      // Get distinct phone numbers used by agents from calls table
-      const { data, error } = await supabase
-        .from('calls')
-        .select('agent_id, phone_number')
-        .not('phone_number', 'is', null)
-        .not('agent_id', 'is', null);
-      
-      if (data && !error) {
+      // phone_numbers rows bound to an agent
+      const data = await api.calls.agentPhoneMap();
+      if (data) {
         const map: Record<string, string> = {};
         data.forEach((call: any) => {
           if (call.phone_number && call.agent_id) {
             const normalized = call.phone_number.replace(/\s/g, '');
-            const agentName = call.agent_id === 'maya_v2' ? 'Maya V2' : call.agent_id;
+            const agentName = call.agent_name || (call.agent_id === 'maya_v2' ? 'Maya V2' : call.agent_id);
             map[normalized] = agentName;
           }
         });
-        console.log('[Agent Mapping] From calls table:', map);
+        console.log('[Agent Mapping]', map);
         setAgentPhoneMap(map);
       }
     } catch (err) {
@@ -115,48 +81,23 @@ export function PhoneNumbers() {
   const fetchVobizNumbers = async () => {
     setLoading(true);
     try {
-      const authId = import.meta.env.VITE_VOBIZ_AUTH_ID;
-      const authToken = import.meta.env.VITE_VOBIZ_AUTH_TOKEN;
-      const headers = {
-        "X-Auth-ID": authId,
-        "X-Auth-Token": authToken,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-      };
+      const data = await api.phoneNumbers.list();
+      let numbersArray: any[] = [];
+      if (Array.isArray(data)) {
+        numbersArray = data;
+      } else if (data && data.objects && Array.isArray(data.objects)) {
+        numbersArray = data.objects;
+      } else if (data && data.data && Array.isArray(data.data)) {
+        numbersArray = data.data;
+      } else if (data && data.numbers && Array.isArray(data.numbers)) {
+        numbersArray = data.numbers;
+      } else if (data && data.results && Array.isArray(data.results)) {
+        numbersArray = data.results;
+      } else if (data && data.items && Array.isArray(data.items)) {
+        numbersArray = data.items;
+      }
       
-      // Fetch phone numbers
-      const response = await fetch(`https://api.vobiz.ai/api/v1/Account/${authId}/numbers`, {
-        method: "GET",
-        headers,
-      });
-
-      const raw = await response.text();
-      if (!response.ok) {
-        console.error(`Vobiz API Error (${response.status}):`, raw);
-        return;
-      }
-
-      try {
-        const data = JSON.parse(raw);
-        let numbersArray: any[] = [];
-        if (Array.isArray(data)) {
-          numbersArray = data;
-        } else if (data && data.objects && Array.isArray(data.objects)) {
-          numbersArray = data.objects;
-        } else if (data && data.data && Array.isArray(data.data)) {
-          numbersArray = data.data;
-        } else if (data && data.numbers && Array.isArray(data.numbers)) {
-          numbersArray = data.numbers;
-        } else if (data && data.results && Array.isArray(data.results)) {
-          numbersArray = data.results;
-        } else if (data && data.items && Array.isArray(data.items)) {
-          numbersArray = data.items;
-        }
-        
-        setVobizNumbers(numbersArray);
-      } catch (e) {
-        console.error("Vobiz returned non-JSON:", raw);
-      }
+      setVobizNumbers(numbersArray);
     } catch (err) {
       console.error("Failed to fetch Vobiz numbers:", err);
     } finally {
@@ -174,7 +115,7 @@ export function PhoneNumbers() {
   const getAgentName = (numberObj: any) => {
     const phoneNumber = numberObj.e164 || numberObj.number || numberObj.phone_number || '';
     
-    // Check direct match from Supabase calls table mapping
+    // Check direct match from the account's number -> agent mapping
     if (agentPhoneMap[phoneNumber]) return agentPhoneMap[phoneNumber];
     
     // Check without + prefix

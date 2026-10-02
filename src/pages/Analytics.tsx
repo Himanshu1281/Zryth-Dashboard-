@@ -1,15 +1,13 @@
-import React, { useState, useEffect, useMemo } from 'react';
 import { useCallsWithMessages } from '../hooks/useCalls';
 import { Layout } from '../layouts/Layout';
 import toast from 'react-hot-toast';
-import { supabase } from '../config/supabase';
 import * as XLSX from 'xlsx';
 
 export function Analytics() {
   const { data: calls = [], isLoading: loading } = useCallsWithMessages();
 
   const getDerivedStatus = (call: any) => {
-    const msgCount = call.messages?.length || 0;
+    const msgCount = call.message_count || 0;
     
     // Strict rule: <= 1 message is always Failed. 
     if (msgCount <= 1) {

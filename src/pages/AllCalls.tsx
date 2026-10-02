@@ -1,10 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useCallsWithMessages } from '../hooks/useCalls';
+import { useState, useEffect } from 'react';
 import { Layout } from '../layouts/Layout';
-import { Link } from 'react-router-dom';
 import { MetricCard } from '../components/ui/MetricCard';
 import { Drawer } from '../components/ui/Drawer';
-import { supabase } from '../config/supabase';
+import { api } from '../api';
 import type { CallData, MessageData } from '../types';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
@@ -44,32 +42,7 @@ export function AllCalls() {
   const fetchCalls = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('calls')
-        .select('*, messages(id, created_at)')
-        .order('started_at', { ascending: false });
-
-      if (error) throw error;
-      
-      const callsData = data || [];
-      
-      // Fetch estimated duration for calls that crashed/ongoing
-      callsData.forEach((call: CallData) => {
-        if ((call.duration_seconds === null || call.duration_seconds === undefined) && call.messages && call.messages.length > 0) {
-          // Find the latest message timestamp
-          const lastMsg = call.messages.reduce((latest, msg) => {
-            return new Date(msg.created_at) > new Date(latest.created_at) ? msg : latest;
-          }, call.messages[0]);
-              
-          const start = new Date(call.started_at);
-          const end = new Date(lastMsg.created_at);
-          const diff = Math.floor((end.getTime() - start.getTime()) / 1000);
-          if (diff > 0) {
-            call.estimated_duration = diff;
-          }
-        }
-      });
-
+      const callsData = await api.calls.list();
       setCalls(callsData);
     } catch (error) {
       console.error('Error fetching calls:', error);
@@ -84,14 +57,8 @@ export function AllCalls() {
     setLoadingMessages(true);
     
     try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('call_id', call.id)
-        .order('created_at', { ascending: true });
-        
-      if (error) throw error;
-      setMessages(data || []);
+      const { messages } = await api.calls.get(call.id);
+      setMessages(messages || []);
     } catch (error) {
       console.error('Error fetching messages:', error);
       setMessages([]);
@@ -123,50 +90,12 @@ export function AllCalls() {
         return;
       }
       
-      const transcriptText = messages.map(m => `${m.speaker === 'maya' ? 'Maya (AI Agent)' : selectedCall?.customer_name || 'Customer'}: ${m.message}`).join('\n');
-      const prompt = `You are an expert conversation analyst. Please read the following customer service transcript and write a concise, professional summary paragraph (3-5 sentences).
-
-Make sure to include:
-1. The customer's specific questions or requests.
-2. Any exact product names, features, or details the agent provided (e.g., Finance Auditor Software, mill industry).
-3. The final outcome of the call.
-
-Please write it as a fluid paragraph, without bullet points or markdown.
-
-Transcript:
-${transcriptText}`;
-      
-      const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
-      if (!apiKey) {
-        setSummary("Google API Key not found. Please add VITE_GOOGLE_API_KEY to your .env file.");
-        setIsSummarizing(false);
-        return;
-      }
-      
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-      
-      if (!response.ok) {
-        const errorBody = await response.text();
-        throw new Error(`HTTP ${response.status}: ${errorBody}`);
-      }
-      
-      const data = await response.json();
-      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      
-      if (generatedText) {
-        setSummary(generatedText);
-      } else {
-        setSummary(`API returned an unexpected response format: ${JSON.stringify(data)}`);
-      }
+      // Summarised by the agent via the backend; no API key in the browser.
+      const { summary: generated } = await api.calls.summarize(selectedCall!.id);
+      setSummary(generated || 'No summary available.');
     } catch (error: any) {
       console.error("Summarization error:", error);
-      setSummary(`API Error: ${error.message || 'Unknown error occurred.'}`);
+      setSummary(`Could not generate summary: ${error.message || 'Unknown error occurred.'}`);
     } finally {
       setIsSummarizing(false);
     }
@@ -229,7 +158,7 @@ ${transcriptText}`;
   };
   
   const getDerivedStatus = (call: CallData) => {
-    const msgCount = call.messages?.length || 0;
+    const msgCount = call.message_count || 0;
     
     // Strict rule: <= 1 message is always Failed. 
     if (msgCount <= 1) {

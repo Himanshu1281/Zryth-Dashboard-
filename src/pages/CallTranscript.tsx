@@ -1,7 +1,7 @@
 import { Layout } from '../layouts/Layout';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { supabase } from '../config/supabase';
+import { api } from '../api';
 
 export function CallTranscript() {
   const navigate = useNavigate();
@@ -16,10 +16,7 @@ export function CallTranscript() {
     const fetchCall = async () => {
       setLoading(true);
       try {
-        const [{ data: callData }, { data: msgs }] = await Promise.all([
-          supabase.from('calls').select('*').eq('id', id).single(),
-          supabase.from('messages').select('*').eq('call_id', id).order('created_at'),
-        ]);
+        const { call: callData, messages: msgs } = await api.calls.get(id);
         if (active) {
           setCall(callData);
           setMessages(msgs || []);

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Layout } from '../layouts/Layout';
 import toast from 'react-hot-toast';
 import { supabase } from '../config/supabase';
+import { api } from '../api';
 import { useAuth } from '../context/AuthContext';
 
 export function Settings() {
@@ -36,7 +37,7 @@ export function Settings() {
       setEmail(currentUser.email || '');
       
       // Fetch custom profile from database
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('users')
         .select('*')
         .eq('id', currentUser.id)
@@ -89,13 +90,8 @@ export function Settings() {
     setIsDeleting(true);
     
     try {
-      // 1. Call the secure RPC function to delete the user completely
-      const { error } = await supabase.rpc('delete_user');
-        
-      if (error) {
-        console.error("Supabase RPC deletion error:", error);
-        throw new Error(`Failed to securely delete user profile and auth record. Database says: ${error.message || JSON.stringify(error)}`);
-      }
+      // 1. The backend deletes the signed-in user's auth record (service key stays server-side)
+      await api.account.deleteMe();
       
       // 2. Sign out the local session
       await logout();

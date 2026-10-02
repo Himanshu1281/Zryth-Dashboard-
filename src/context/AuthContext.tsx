@@ -34,6 +34,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = useCallback(async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
+      // Return to whichever host started the login (localhost in dev, aicalling.wrytflow.com in prod)
+      options: { redirectTo: window.location.origin },
     });
   }, []);
 

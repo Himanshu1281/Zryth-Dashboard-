@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Layout } from '../layouts/Layout';
 import toast from 'react-hot-toast';
-import { supabase } from '../config/supabase';
+import { api } from '../api';
 
 export function KnowledgeBase() {
   const [files, setFiles] = useState<any[]>([]);
@@ -17,18 +17,11 @@ export function KnowledgeBase() {
   const fetchFiles = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.storage.from('knowledge_base').list();
-      if (error) throw error;
-      
-      // Filter out the empty placeholder file that Supabase creates sometimes (e.g., .emptyFolderPlaceholder)
-      const validFiles = data?.filter(f => f.name !== '.emptyFolderPlaceholder' && f.name !== '.DS_Store') || [];
-      
-      // Sort by created_at descending
-      validFiles.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      
-      setFiles(validFiles);
-    } catch (error) {
+      // Backend hides placeholder files and sorts newest first
+      setFiles(await api.knowledge.list());
+    } catch (error: any) {
       console.error('Error fetching files:', error);
+      toast.error('Failed to load documents: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -55,20 +48,15 @@ export function KnowledgeBase() {
     try {
       setUploading(true);
       
-      // Sanitize file name
-      const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const filePath = `${Date.now()}_${fileName}`;
-
-      const { error } = await supabase.storage
-        .from('knowledge_base')
-        .upload(filePath, file);
-
-      if (error) {
-        throw error;
-      }
+      // Backend stores the file, then has the agent chunk + embed it for Maya
+      const result = await api.knowledge.upload(file);
 
       await fetchFiles();
-      toast.success('Document uploaded successfully.');
+      if (result?.ingested) {
+        toast.success('Document uploaded and added to the knowledge base.');
+      } else {
+        toast('Document uploaded, but the agent could not process it yet. It will retry on the next sync.', { icon: '⚠️' });
+      }
     } catch (error: any) {
       console.error('Error uploading file:', error);
       toast.error(error.message || 'Error uploading file.');
@@ -91,12 +79,7 @@ export function KnowledgeBase() {
 
     setIsDeleting(true);
     try {
-      const { error } = await supabase.storage
-        .from('knowledge_base')
-        .remove([documentToDelete]);
-
-      if (error) throw error;
-      
+      await api.knowledge.remove(documentToDelete);
       await fetchFiles();
       setShowDeleteModal(false);
       setDocumentToDelete(null);
@@ -111,26 +94,11 @@ export function KnowledgeBase() {
 
   const handleView = async (fileName: string) => {
     try {
-      // First try to get signed URL (works for private buckets)
-      const { data, error } = await supabase.storage
-        .from('knowledge_base')
-        .createSignedUrl(fileName, 60 * 5); // 5 mins
-
-      if (error && error.message === 'Bucket is public') {
-        // Fallback to public URL if bucket is public
-        const { data: publicData } = supabase.storage
-          .from('knowledge_base')
-          .getPublicUrl(fileName);
-        window.open(publicData.publicUrl, '_blank');
-        return;
-      }
-
-      if (error) throw error;
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
-      }
-    } catch (error) {
+      const { url } = await api.knowledge.url(fileName); // 5-minute signed URL
+      if (url) window.open(url, '_blank');
+    } catch (error: any) {
       console.error('Error opening file:', error);
+      toast.error('Could not open document: ' + error.message);
     }
   };
 
@@ -207,8 +175,8 @@ export function KnowledgeBase() {
             </h3>
             <p className="font-body-md text-base text-on-surface-variant max-w-md mx-auto">
               {uploading 
-                ? 'Please wait while we sync the file to your backend.' 
-                : 'Supports PDF files up to 50MB. Documents are automatically synced to the Supabase backend.'}
+                ? 'Uploading and processing the document so Maya can use it. This can take a minute.' 
+                : 'Supports PDF files up to 50MB. Maya can answer from them once processing finishes.'}
             </p>
             {!uploading && (
               <button className="mt-4 bg-transparent border border-white/15 text-on-surface px-6 py-2 rounded-lg font-label-md text-xs uppercase tracking-wider hover:bg-white/5 transition-colors font-semibold">

@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useCallsWithMessages } from '../hooks/useCalls';
 import { Link } from 'react-router-dom';
 import { Layout } from '../layouts/Layout';
-import { supabase } from '../config/supabase';
+import { useMetrics } from '../hooks/useMetrics';
 
 export function Dashboard() {
   const { data: calls = [], isLoading: loading } = useCallsWithMessages();
 
   const getDerivedStatus = (call: any) => {
-    const msgCount = call.messages?.length || 0;
+    const msgCount = call.message_count || 0;
     
     // Strict rule: <= 1 message is always Failed. 
     if (msgCount <= 1) {
@@ -33,41 +33,9 @@ export function Dashboard() {
   };
 
   // Calculate Metrics
-  const [activeAgentsCount, setActiveAgentsCount] = useState(0);
-
-  useEffect(() => {
-    const fetchActiveAgents = async () => {
-      try {
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/agent_status?select=*`, {
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          },
-          cache: 'no-store'
-        });
-        
-        const data = await response.json();
-        
-        if (data && Array.isArray(data)) {
-          // Consider agent active if status is 'active' or heartbeat is within last 30s
-          const active = data.filter(a => {
-            if (a.status === 'active') return true;
-            if (a.last_heartbeat) {
-              const hb = new Date(a.last_heartbeat).getTime();
-              if (Date.now() - hb < 30000) return true;
-            }
-            return false;
-          }).length;
-          setActiveAgentsCount(active);
-        }
-      } catch (err) {
-        console.error('Error fetching active agents:', err);
-      }
-    };
-    fetchActiveAgents();
-  }, []);
+  // Org agents answering an active number while the voice platform is up
+  const { data: orgMetrics } = useMetrics();
+  const activeAgentsCount = orgMetrics?.activeAgents ?? 0;
 
   const metrics = useMemo(() => {
     let connected = 0;

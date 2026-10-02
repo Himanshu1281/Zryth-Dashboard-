@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../layouts/Layout';
-import { supabase } from '../config/supabase';
+import { api } from '../api';
 import toast from 'react-hot-toast';
 
 interface Prompt {
@@ -38,12 +38,7 @@ export function Prompts() {
   const fetchPrompts = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('prompts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await api.prompts.list();
       if (data) setPrompts(data as Prompt[]);
     } catch (error) {
       console.error('Error fetching prompts:', error);
@@ -93,32 +88,18 @@ export function Prompts() {
     setSaving(true);
     try {
       if (editingPrompt) {
-        const { error } = await supabase
-          .from('prompts')
-          .update({ tag: formTag, content: formContent })
-          .eq('id', editingPrompt.id);
-
-        if (error) throw error;
+        await api.prompts.update(editingPrompt.id, { tag: formTag, content: formContent });
       } else {
-        const { error } = await supabase
-          .from('prompts')
-          .insert([{ tag: formTag, content: formContent }]);
-
-        if (error) {
-          if (error.code === '23505') {
-            toast.error('A prompt with this tag already exists.');
-            return;
-          }
-          throw error;
-        }
+        await api.prompts.create({ tag: formTag, content: formContent });
       }
 
       await fetchPrompts();
       toast.success("Prompt saved successfully.");
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving prompt:', error);
-      toast.error('Failed to save prompt.');
+      // Backend answers 409 "Already exists" on a duplicate tag
+      toast.error(error.message === 'Already exists' ? 'A prompt with this tag already exists.' : 'Failed to save prompt.');
     } finally {
       setSaving(false);
     }
@@ -132,12 +113,7 @@ export function Prompts() {
     if (!promptToDelete) return;
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('prompts')
-        .delete()
-        .eq('id', promptToDelete);
-
-      if (error) throw error;
+      await api.prompts.remove(promptToDelete);
       setPrompts(prompts.filter(p => p.id !== promptToDelete));
       toast.success("Prompt deleted successfully.");
     } catch (error) {

@@ -1,12 +1,11 @@
 import { Layout } from '../layouts/Layout';
 import toast from 'react-hot-toast';
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { supabase } from '../config/supabase';
+import { api } from '../api';
 import { useCallsWithMessages } from '../hooks/useCalls';
 
 
 export function VoiceAgents() {
-  const [searchQuery, setSearchQuery] = useState('');
   const [isActive, setIsActive] = useState(false);
   const [isConfigDrawerOpen, setIsConfigDrawerOpen] = useState(false);
   const lastHeartbeatRef = useRef<number>(0);
@@ -22,46 +21,32 @@ export function VoiceAgents() {
   useEffect(() => {
     if (isConfigDrawerOpen) {
       const fetchData = async () => {
-        // Fetch all available prompts
-        const { data: promptsData } = await supabase.from('prompts').select('*').order('created_at', { ascending: false });
-        let allPrompts = [];
-        if (promptsData) {
-          allPrompts = promptsData.map((p: any) => ({
+        try {
+          const [promptsData, toolsData, config] = await Promise.all([
+            api.prompts.list(), api.tools.list(), api.agent.config(),
+          ]);
+          const allPrompts = (promptsData || []).map((p: any) => ({
             id: p.id,
             name: p.tag,
             desc: p.content,
             role: 'Database Prompt'
           }));
           setDbPrompts(allPrompts);
-        }
+          const assignedTags = (config?.prompts || []).map((ap: any) => ap.prompt_tag);
+          setAssignedPrompts(allPrompts.filter((p: any) => assignedTags.includes(p.name)));
 
-        // Fetch assigned prompts for Maya V2
-        const { data: agentPromptsData } = await supabase.from('agent_prompts').select('*').eq('agent_id', 'maya_v2');
-        if (agentPromptsData) {
-          const assignedTags = agentPromptsData.map(ap => ap.prompt_tag);
-          const assigned = allPrompts.filter(p => assignedTags.includes(p.name));
-          setAssignedPrompts(assigned);
-        }
-
-        // Fetch all available tools
-        const { data: toolsData } = await supabase.from('tools').select('*').order('created_at', { ascending: false });
-        let allTools: any[] = [];
-        if (toolsData) {
-          allTools = toolsData.map((t: any) => ({
+          const allTools = (toolsData || []).map((t: any) => ({
             id: t.id,
             name: t.name,
             desc: t.description || t.execution_instruction || '',
             type: 'Database Tool'
           }));
           setDbTools(allTools);
-        }
-
-        // Fetch assigned tools for Maya V2
-        const { data: agentToolsData } = await supabase.from('agent_tools').select('*').eq('agent_id', 'maya_v2');
-        if (agentToolsData) {
-          const assignedToolNames = agentToolsData.map(at => at.tool_name);
-          const assigned = allTools.filter(t => assignedToolNames.includes(t.name));
-          setAssignedTools(assigned);
+          const assignedToolNames = (config?.tools || []).map((at: any) => at.tool_name);
+          setAssignedTools(allTools.filter((t: any) => assignedToolNames.includes(t.name)));
+        } catch (err: any) {
+          console.error('Error loading agent config:', err);
+          toast.error('Error loading agent config: ' + err.message);
         }
       };
       fetchData();
@@ -74,30 +59,25 @@ export function VoiceAgents() {
       setIsPromptMenuOpen(false);
       return;
     }
-    const { error } = await supabase.from('agent_prompts').insert({
-      agent_id: 'maya_v2',
-      prompt_tag: prompt.name
-    });
-    if (error) {
-      console.error('Insert error:', error);
-      toast.error('Error attaching prompt: ' + error.message);
-    } else {
+    try {
+      await api.agent.attachPrompt(prompt.name);
       setAssignedPrompts([...assignedPrompts, prompt]);
       toast.success(`Prompt "${prompt.name}" attached successfully.`);
+    } catch (error: any) {
+      console.error('Attaching prompt error:', error);
+      toast.error('Error attaching prompt: ' + error.message);
     }
     setIsPromptMenuOpen(false);
   };
 
   const handleDetachPrompt = async (prompt: any) => {
-    const { error } = await supabase.from('agent_prompts').delete()
-      .eq('agent_id', 'maya_v2')
-      .eq('prompt_tag', prompt.name);
-    if (error) {
-      console.error('Delete error:', error);
-      toast.error('Error detaching prompt: ' + error.message);
-    } else {
+    try {
+      await api.agent.detachPrompt(prompt.name);
       setAssignedPrompts(assignedPrompts.filter(p => p.name !== prompt.name));
       toast.success(`Prompt "${prompt.name}" detached.`);
+    } catch (error: any) {
+      console.error('Detaching prompt error:', error);
+      toast.error('Error detaching prompt: ' + error.message);
     }
   };
 
@@ -106,30 +86,25 @@ export function VoiceAgents() {
       setIsToolMenuOpen(false);
       return;
     }
-    const { error } = await supabase.from('agent_tools').insert({
-      agent_id: 'maya_v2',
-      tool_name: tool.name
-    });
-    if (error) {
-      console.error('Insert error:', error);
-      toast.error('Error attaching tool: ' + error.message);
-    } else {
+    try {
+      await api.agent.attachTool(tool.name);
       setAssignedTools([...assignedTools, tool]);
       toast.success(`Tool "${tool.name}" attached successfully.`);
+    } catch (error: any) {
+      console.error('Attaching tool error:', error);
+      toast.error('Error attaching tool: ' + error.message);
     }
     setIsToolMenuOpen(false);
   };
 
   const handleDetachTool = async (tool: any) => {
-    const { error } = await supabase.from('agent_tools').delete()
-      .eq('agent_id', 'maya_v2')
-      .eq('tool_name', tool.name);
-    if (error) {
-      console.error('Delete error:', error);
-      toast.error('Error detaching tool: ' + error.message);
-    } else {
+    try {
+      await api.agent.detachTool(tool.name);
       setAssignedTools(assignedTools.filter(t => t.name !== tool.name));
       toast.success(`Tool "${tool.name}" detached.`);
+    } catch (error: any) {
+      console.error('Detaching tool error:', error);
+      toast.error('Error detaching tool: ' + error.message);
     }
   };
 
@@ -140,7 +115,7 @@ export function VoiceAgents() {
     if (total === 0) return { totalCalls: 0, avgDurationStr: '0m 0s', resolutionPct: '0%' };
 
     const getDerivedStatus = (call: any) => {
-      const msgCount = call.messages?.length || 0;
+      const msgCount = call.message_count || 0;
       if (msgCount <= 1) return 'Failed';
       if (call.status && call.status.toLowerCase() !== 'failed') return call.status;
       if (!call.ended_at) {
@@ -198,46 +173,17 @@ export function VoiceAgents() {
 
     const fetchStatus = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/agent_status?select=*`, {
-          headers: {
-            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
-          },
-          cache: 'no-store'
-        });
-        
-        const data = await response.json();
-        if (data && data.length > 0) {
-          const maya = data.find((d: any) => d.agent_id === 'maya_v2');
-          if (maya) {
-            evaluateStatus(maya.status, maya.last_heartbeat);
-          }
-        }
+        const st = await api.agent.status();
+        evaluateStatus(st?.status, st?.last_heartbeat);
       } catch (err) {
-        console.error('Error in raw fetch:', err);
+        console.error('Error fetching agent status:', err);
       }
     };
 
     fetchStatus();
 
-    const channel = supabase
-      .channel('agent_status_changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'agent_status' }, (payload) => {
-        if (payload.new && payload.new.agent_id === 'maya_v2') {
-          evaluateStatus(payload.new.status, payload.new.last_heartbeat);
-        }
-      })
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'agent_status' }, (payload) => {
-        if (payload.new && payload.new.agent_id === 'maya_v2') {
-          evaluateStatus(payload.new.status, payload.new.last_heartbeat);
-        }
-      })
-      .subscribe();
-
     const intervalId = setInterval(() => {
-      fetchStatus(); // Poll status periodically
+      fetchStatus(); // Poll the backend; the agent heartbeats every 10s
       if (lastHeartbeatRef.current > 0) {
         if (Date.now() - lastHeartbeatRef.current > 30000) {
            setIsActive(false);
@@ -246,7 +192,6 @@ export function VoiceAgents() {
     }, 5000);
 
     return () => {
-      supabase.removeChannel(channel);
       clearInterval(intervalId);
     };
   }, []);

@@ -16,13 +16,26 @@ import { Prompts } from './pages/Prompts';
 import { Tools } from './pages/Tools';
 
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 import { Toaster } from 'react-hot-toast';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      // Retry network/server errors, never client errors (401/403/404/409...)
+      retry: (count, error: any) => {
+        const status = error?.status ?? 0;
+        return status >= 400 && status < 500 ? false : count < 2;
+      },
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
   return (
+    <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <Toaster position="top-right" toastOptions={{
         style: {
@@ -50,10 +63,12 @@ function App() {
             <Route path="/phone-numbers" element={<ProtectedRoute><PhoneNumbers /></ProtectedRoute>} />
             <Route path="/prompts" element={<ProtectedRoute><Prompts /></ProtectedRoute>} />
             <Route path="/tools" element={<ProtectedRoute><Tools /></ProtectedRoute>} />
-            <Route path="*" element={<Navigate to="/" replace />} />`n          </Routes>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

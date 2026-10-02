@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthLayout } from '../layouts/AuthLayout';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../config/supabase';
 
 export function SignUp() {
   const navigate = useNavigate();
@@ -22,43 +21,25 @@ export function SignUp() {
     setIsSubmitting(true);
     
     try {
-      // 0. Check if email already exists in our database
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('email')
-        .eq('email', email.trim())
-        .maybeSingle();
-        
-      if (existingUser) {
-        throw new Error("User already exist . please sign in instead.");
-      }
+      // 1. Create the auth user. The profile row in public.users is created by the
+      //    on_auth_user_created trigger from this metadata (see lock-down-rls.sql).
+      const { data: userCredential, error: signupError } = await signup({
+        email,
+        password,
+        options: { data: { full_name: fullName, company } },
+      });
 
-      // 1. Create Supabase Auth User
-      const { data: userCredential, error: signupError } = await signup({ email, password });
-      
       if (signupError) throw signupError;
-      
+
       const user = userCredential.user;
-      
+
       if (!user) {
         throw new Error("Failed to retrieve user data after signup.");
       }
 
-      // 2. Insert Profile into Supabase
-      const { error: supabaseError } = await supabase
-        .from('users')
-        .insert([
-          {
-            id: user.id,
-            full_name: fullName,
-            email: email,
-            company: company
-          }
-        ]);
-
-      if (supabaseError) {
-        console.error("Failed to save profile to Supabase:", supabaseError);
-        // We might want to alert the user, but they are already authenticated in Firebase.
+      // Supabase returns a user with no identities when the email is already registered
+      if (user.identities && user.identities.length === 0) {
+        throw new Error("User already exist . please sign in instead.");
       }
 
       navigate('/');

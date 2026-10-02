@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout } from '../layouts/Layout';
-import { supabase } from '../config/supabase';
+import { api } from '../api';
 import toast from 'react-hot-toast';
 
 interface Tool {
@@ -9,6 +9,21 @@ interface Tool {
   json_spec: string;
   execution_instruction: string;
 }
+
+// The format the voice agent runs: a fixed https endpoint; {placeholders} are filled from the inputs
+const TOOL_SPEC_EXAMPLE = `{
+  "description": "Get the current weather for a location",
+  "input_schema": {
+    "type": "object",
+    "required": ["latitude", "longitude"],
+    "properties": { "latitude": { "type": "number" }, "longitude": { "type": "number" } }
+  },
+  "http": {
+    "method": "GET",
+    "url_template": "https://api.open-meteo.com/v1/forecast",
+    "query_params": { "latitude": "{latitude}", "longitude": "{longitude}", "current_weather": "true" }
+  }
+}`;
 
 export function Tools() {
   const [tools, setTools] = useState<Tool[]>([]);
@@ -37,12 +52,14 @@ export function Tools() {
 
   const fetchTools = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('tools')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let data: any[] | null = null;
+    try {
+      data = await api.tools.list();
+    } catch (error: any) {
+      toast.error("Failed to load tools: " + error.message);
+    }
 
-    if (!error && data) {
+    if (data) {
       setTools(data.map((t: any) => ({
         id: t.id,
         name: t.name,
@@ -81,7 +98,7 @@ export function Tools() {
       errors.name = "Tool name is required to save.";
     }
     
-    let parsedJson;
+    let parsedJson: any;
     try {
       parsedJson = JSON.parse(formJson);
     } catch (e) {
@@ -97,13 +114,16 @@ export function Tools() {
 
     setSaving(true);
 
-    if (editingTool) {
-      const { error } = await supabase.from('tools').update({
-        name: formName,
-        json_spec: parsedJson,
-        execution_instruction: formInstruction
-      }).eq('id', editingTool.id);
+    const payload = { name: formName, json_spec: parsedJson, execution_instruction: formInstruction };
+    let error: any = null;
+    let data: any = null;
+    try {
+      data = editingTool ? await api.tools.update(editingTool.id, payload) : await api.tools.create(payload);
+    } catch (e: any) {
+      error = e;
+    }
 
+    if (editingTool) {
       if (!error) {
         setTools(tools.map(t => t.id === editingTool.id ? {
           ...t,
@@ -117,12 +137,6 @@ export function Tools() {
         toast.error("Failed to save tool: " + error.message);
       }
     } else {
-      const { data, error } = await supabase.from('tools').insert({
-        name: formName,
-        json_spec: parsedJson,
-        execution_instruction: formInstruction
-      }).select().single();
-
       if (!error && data) {
         setTools([{
           id: data.id,
@@ -146,7 +160,12 @@ export function Tools() {
   const executeDeleteTool = async () => {
     if (!toolToDelete) return;
     setIsDeleting(true);
-    const { error } = await supabase.from('tools').delete().eq('id', toolToDelete);
+    let error: any = null;
+    try {
+      await api.tools.remove(toolToDelete);
+    } catch (e: any) {
+      error = e;
+    }
     if (!error) {
       setTools(tools.filter(t => t.id !== toolToDelete));
       toast.success("Tool deleted successfully.");
@@ -310,8 +329,8 @@ export function Tools() {
                   value={formJson}
                   onChange={e => { setFormJson(e.target.value); if(formErrors.json) setFormErrors({...formErrors, json: undefined}); }}
                   className={`w-full bg-surface-container border ${formErrors.json ? 'border-error' : 'border-surface-container-high'} rounded text-xs font-mono text-primary placeholder:text-on-surface-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition p-3 resize-y leading-relaxed`}
-                  placeholder="{\n  &quot;type&quot;: &quot;function&quot;,\n  &quot;function&quot;: { ... }\n}" 
-                  rows={7}
+                  placeholder={TOOL_SPEC_EXAMPLE}
+                  rows={14}
                 ></textarea>
                 {formErrors.json && <p className="text-[10px] text-error mt-1">{formErrors.json}</p>}
               </div>
